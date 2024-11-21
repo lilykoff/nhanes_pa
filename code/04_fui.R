@@ -1,4 +1,5 @@
 library(tidyverse)
+if(!require("fastFMM")) install.packages("fastFMM")
 library(fastFMM)
 
 logac = readRDS(here::here("data", "2011_2014", "accelerometry", "minute_level", "nhanes_1440_LAC.rds"))
@@ -39,24 +40,30 @@ dfmat_1440 =
   mutate(ac = act_mat) %>%
   as.data.frame()
 
-test_df = dfmat_1440 %>%
-  slice(1:200)
+# test_df = dfmat_1440 %>%
+#   slice(1:200)
 
 fit_fui = fastFMM::fui(ac ~ age + gender + (1|SEQN),
-                           data = test_df,
+                           data = dfmat_1440,
                            var = TRUE,
-                           argvals = seq(from = 1, to = 1440, by = 5),
+                           argvals = seq(from = 1, to = 1440, by = 10),
                            family = "gaussian",
                            analytic = FALSE,
                            boot_type = "case",
-                           num_boots = 50)
+                           num_boots = 500)
 
+saveRDS(fit_fui, here::here("results", "fui_res.rds"))
 plot_obj = fastFMM::plot_fui(fit_fui, return = TRUE)
-plot_obj %>%
-  keep(is.data.frame) %>%
-  bind_rows(.id = "var") %>%
-  mutate(sig = CI.lower.pointwise > 0 | CI.upper.pointwise < 0) %>%
-  ggplot(aes(x = s, y = beta.hat, group = 1)) +
-  geom_ribbon(aes(ymin = CI.lower.pointwise, ymax = CI.upper.pointwise), fill = "lightgrey") +
-  geom_line(aes(col = sig), linewidth = .8) +
-  facet_wrap(~var, scales = "free_y")
+
+#
+#
+#
+# plot_obj %>%
+#   keep(is.data.frame) %>%
+#   bind_rows(.id = "var") %>%
+#   mutate(sig = CI.lower.pointwise > 0 | CI.upper.pointwise < 0) %>%
+#   ggplot(aes(x = s, y = beta.hat, group = 1)) +
+#   geom_ribbon(aes(ymin = CI.lower.pointwise, ymax = CI.upper.pointwise),
+#               fill = "lightgrey") +
+#   geom_line(aes(col = sig), linewidth = .8) +
+#   facet_wrap( ~ var, scales = "free_y")
