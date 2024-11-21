@@ -1,5 +1,5 @@
 library(tidyverse)
-if(!require("fastFMM")) install.packages("fastFMM")
+if(!require("fastFMM")) install.packages("fastFMM", dependencies = TRUE)
 library(fastFMM)
 
 logac = readRDS(here::here("data", "2011_2014", "accelerometry", "minute_level", "nhanes_1440_LAC.rds"))
