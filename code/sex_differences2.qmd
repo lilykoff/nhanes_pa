@@ -1,0 +1,2155 @@
+---
+title: "Sex Differences"
+format:
+  html:
+    toc: true
+    toc-location: left
+    embed-resources: true
+    code-background: true
+    code-tools: true
+    code-fold: true
+    code-block-border-left: true
+execute:
+  echo: true
+  cache: false
+  message: false
+  warning: false
+editor: source
+---
+
+```{css define scrollable chunk, echo = FALSE}
+.output {
+max-height: 500px;
+overflow-y: scroll;
+}
+```
+
+```{r}
+#| cache: false 
+# load packages 
+library(tidyverse)
+library(gtsummary)
+library(gt)
+library(tidymodels)
+library(censored)
+library(paletteer)
+library(survey)
+library(patchwork)
+theme_set(theme_light())
+# paletteer_d("colorBlindness::PairedColor12Steps")
+col1 = "#FF9932"; col2 = "#65CCFF"
+col1 = "#CC5151"; col2 = "#422CB2"
+# paletteer_d("ggthemes::colorblind")
+col_vec = c("#000000FF", "#009E73FF", "#CC79A7FF", "#E69F00FF", "#D55E00FF", "#56B4E9FF", "#0072B2FF")
+
+pa_old = readRDS(here::here("data", "accelerometry", 
+                              "summarized", "pa_summary_AC_C_D.rds")) %>% 
+  mutate(SEQN = as.character(SEQN)) %>% 
+  group_by(SEQN) %>%
+  summarize(across(-PAXDAY, ~mean(.x, na.rm = TRUE))) 
+
+days = readRDS(here::here("data", "accelerometry", "inclusion_c_d.rds"))
+
+wear = 
+  days %>% 
+  mutate(non_zero_vals = non_na_vals - zero_vals) %>% 
+  filter(include_day) %>% 
+  group_by(SEQN) %>% 
+  summarize(wear_mins = mean(non_zero_vals)) %>% 
+  mutate(SEQN = as.character(SEQN))
+
+demo = readRDS(here::here("data", "demographics", "processed", "subset_C_D_tidy.rds")) 
+  
+```
+
+# NHANES 2003-2006
+
+## Survey Weighted Physical Activity Summaries by Sex 
+
+```{r}
+df_small = pa_old %>% 
+  left_join(demo) %>% 
+  left_join(wear) %>% 
+  filter(age_in_years_at_screening >= 18) %>%
+  select(SEQN,
+         data_release_cycle,
+         gender,
+         wear_mins,
+         masked_variance_pseudo_psu,
+         masked_variance_pseudo_stratum,
+         full_sample_2_year_interview_weight,
+         full_sample_2_year_mec_exam_weight,
+         age_in_years_at_screening,
+         total, 
+         mean,
+         mvpa, 
+         mod,
+         vig,
+         mvpa_bout,
+         vig_bout,
+         starts_with("x"),
+         missing_ac = na,
+         median,
+         logmean, 
+         logmedian, 
+         logtotal) 
+labs = c("SEQN", "Data release cycle", "Gender",  "Wear minutes",
+         "Pseudo PSU",
+         "Psueudo stratum",
+         "2 yr int weight", "2 yr exam weight",
+         "Age", "Total AC", "Mean AC", "MVPA minutes",  "Moderate minutes", "Vigorous minutes",
+         "MVPA (10 min bout)",
+         "Vig (10 min bout)",
+         "Time <5", "Time [5,10]","Time (10,25]","Time (25,50]", "Time (50,75]", "Time (75,100]", "Time (100,150]", "Time (150,200]", "Time (200,500]", 
+         "Time (500,1000]", "Time (1000,2000]", "Time (2000,4000]","Time (4000,6000]","Time >6000", "Missing AC",
+         "Median AC", "log10 mean AC", "log10 median AC", "log10 total AC") 
+
+names(labs) = colnames(df_small)
+
+df_small =
+  df_small %>%
+  labelled::set_variable_labels(!!!labs)
+
+df_svy =
+  df_small %>% 
+  mutate(WTMEC4YR = full_sample_2_year_mec_exam_weight/2,
+         WTMEC4YR_norm = WTMEC4YR/mean(WTMEC4YR, na.rm = TRUE)) %>%
+  svydesign(ids = ~masked_variance_pseudo_psu, weights = ~WTMEC4YR_norm,
+            strata = ~masked_variance_pseudo_stratum, data=., nest=TRUE)
+
+# survey weighted table
+df_svy %>%
+  tbl_svysummary(
+    by = gender,
+    include = -c(SEQN, data_release_cycle, masked_variance_pseudo_psu, masked_variance_pseudo_stratum, full_sample_2_year_interview_weight, full_sample_2_year_mec_exam_weight, WTMEC4YR, WTMEC4YR_norm),
+    statistic = list(
+      all_continuous() ~ "{mean} ({sd})",
+      all_categorical() ~ "{n} ({p}%)"
+    ),
+    digits = all_continuous() ~ 1,
+    missing_text = "Missing",
+  ) %>%
+  add_overall() %>%
+  add_p()
+
+```
+
+
+### Medians 
+
+```{r}
+# unweighted, use median
+df_small %>% 
+  tbl_summary(
+    by = gender,
+    include = -c(SEQN, data_release_cycle, masked_variance_pseudo_psu, masked_variance_pseudo_stratum, full_sample_2_year_interview_weight, full_sample_2_year_mec_exam_weight),
+    statistic = list(
+      all_continuous() ~ "{median} ({IQR})",
+      all_categorical() ~ "{n} ({p}%)"
+    ),
+    digits = all_continuous() ~ 1,
+    missing_text = "Missing",
+  ) %>%
+  add_overall() %>%
+  add_p()
+
+```
+
+### Stratified by wave 
+
+::: {.panel-tabset}
+
+#### 2003-2004
+
+```{r}
+df_svy =
+  df_small %>% 
+  filter(data_release_cycle == 3) %>%
+  mutate(WTMEC4YR = full_sample_2_year_mec_exam_weight,
+         WTMEC4YR_norm = WTMEC4YR/mean(WTMEC4YR, na.rm = TRUE)) %>%
+  svydesign(ids = ~masked_variance_pseudo_psu, weights = ~WTMEC4YR_norm,
+            strata = ~masked_variance_pseudo_stratum, data=., nest=TRUE)
+
+# survey weighted table
+df_svy %>%
+  tbl_svysummary(
+    by = gender,
+    include = -c(SEQN, data_release_cycle, masked_variance_pseudo_psu, masked_variance_pseudo_stratum, full_sample_2_year_interview_weight, full_sample_2_year_mec_exam_weight, WTMEC4YR, WTMEC4YR_norm),
+    statistic = list(
+      all_continuous() ~ "{mean} ({sd})",
+      all_categorical() ~ "{n} ({p}%)"
+    ),
+    digits = all_continuous() ~ 0,
+    missing_text = "Missing",
+  ) %>%
+  add_overall() %>%
+  add_p()
+```
+
+#### 2005-2006
+
+```{r}
+df_svy =
+  df_small %>% 
+  filter(data_release_cycle == 4) %>%
+  mutate(WTMEC4YR = full_sample_2_year_mec_exam_weight,
+         WTMEC4YR_norm = WTMEC4YR/mean(WTMEC4YR, na.rm = TRUE)) %>%
+  svydesign(ids = ~masked_variance_pseudo_psu, weights = ~WTMEC4YR_norm,
+            strata = ~masked_variance_pseudo_stratum, data=., nest=TRUE)
+
+# survey weighted table
+df_svy %>%
+  tbl_svysummary(
+    by = gender,
+    include = -c(SEQN, data_release_cycle, masked_variance_pseudo_psu, masked_variance_pseudo_stratum, full_sample_2_year_interview_weight, full_sample_2_year_mec_exam_weight, WTMEC4YR, WTMEC4YR_norm),
+    statistic = list(
+      all_continuous() ~ "{mean} ({sd})",
+      all_categorical() ~ "{n} ({p}%)"
+    ),
+    digits = all_continuous() ~ 0,
+    missing_text = "Missing",
+  ) %>%
+  add_overall() %>%
+  add_p()
+
+
+
+```
+::: 
+
+## Survey-Weighted Physical Activity Summaries by Sex and Age 
+
+```{r}
+#| class: output 
+survey_design =
+  df_small %>%
+  mutate(age_cat = cut(age_in_years_at_screening,
+                       breaks=c(18, 30, seq(40, 80, 10)))) %>%
+  mutate(weight = full_sample_2_year_mec_exam_weight / 2,
+         weight_norm = weight / mean(weight)) %>%
+  ungroup()  %>%
+  survey::svydesign(
+    id = ~ masked_variance_pseudo_psu,
+    strata = ~ masked_variance_pseudo_stratum,
+    weights = ~ weight_norm,
+    data = .,
+    nest = TRUE
+  )
+
+calc_by_age =
+  function(var, df) {
+    formula = as.formula(paste("~", var))
+    total_by_age_gender = svyby(formula,
+                                ~ age_cat + gender,
+                                df,
+                                svymean) %>%
+      rename(mean = contains(var)) %>%
+      mutate(metric = var)
+  }
+
+means_df =
+  map_dfr(.x = pa_old %>% select(contains("bout"), starts_with("x"), total, mean, mvpa, mod, vig) %>% colnames(),
+          .f = calc_by_age, df = survey_design)
+
+
+small = 
+  means_df %>%
+  pivot_wider(names_from = gender, values_from = c(mean, se)) %>% 
+  mutate(val_female = paste0(round(mean_Female), " (", round(mean_Female - 1.96 * se_Female), ",", round(mean_Female + 1.96 * se_Female), ")"),
+         val_male = paste0(round(mean_Male), " (", round(mean_Male - 1.96 * se_Female), ",", round(mean_Male + 1.96 * se_Male), ")"))
+
+# test = svyttest(mvpa_montoye ~ gender, survey_design)
+pvals = c()
+for(i in 1:nrow(small)){
+  row = means_df[i,]
+  cat = row$age_cat
+  var = row$metric
+  survey_design =
+    df_small %>%
+    mutate(age_cat = cut(age_in_years_at_screening,
+                         breaks=c(18, 30, seq(40, 80, 10)))) %>%
+    filter(age_cat == cat) %>%
+    mutate(weight = full_sample_2_year_mec_exam_weight / 2,
+           weight_norm = weight / mean(weight)) %>%
+    ungroup()  %>%
+    survey::svydesign(
+      id = ~ masked_variance_pseudo_psu,
+      strata = ~ masked_variance_pseudo_stratum,
+      weights = ~ weight_norm,
+      data = .,
+      nest = TRUE
+    )
+  formula = as.formula(paste(var,  "~ gender"))
+  test = svyttest(formula, survey_design)
+  pvals = append(pvals, unname(test$p.value))
+}
+
+small %>% 
+  select(metric, age_cat, Female = val_female, Male = val_male, mean_Female, mean_Male) %>% 
+  bind_cols(p = pvals) %>% 
+  mutate(pval = if_else(p < 0.001, "<0.001", format.pval(p, digits = 2))) %>% 
+  # mutate(metric = factor(metric, 
+  #                        labels = c("MVPA (min)", 
+  #                                   "VPA (min)", "Time <1000",
+  #                                   "Time [1000,2000]", "Time (2000,3000]", "Time (3000,4000]", "Time (4000,5000]", "Time (5000,6000]", "Time (6000,7000]", "Time (7000,8000]", "Time (8000,9000]", "Time >9000", "Total AC", "Mean AC", "Total MIMS"))) %>% 
+  group_by(metric) %>% 
+  gt() %>% 
+  cols_hide(c("mean_Female", "mean_Male", "p")) %>% 
+  tab_style(
+    # Style to apply when conditions are met
+    style = cell_fill(color = "lightpink"),
+    locations = cells_body(
+      rows = mean_Female > mean_Male & p < 0.05
+    )
+  ) %>% 
+  tab_style(
+    # Style to apply when conditions are met
+    style = cell_fill(color = "lightblue"),
+    locations = cells_body(
+      rows = mean_Female < mean_Male & p < 0.05
+    )
+  )
+  
+
+
+```
+
+### Medians 
+
+```{r}
+#| class: output 
+survey_design =
+  df_small %>%
+  mutate(age_cat = cut(age_in_years_at_screening,
+                       breaks=c(18, 30, seq(40, 80, 10)))) %>% 
+  filter(!is.na(age_cat))
+calc_by_age =
+  function(var, df) {
+    df %>% 
+      select(v = all_of(var), age_cat, gender) %>% 
+      group_by(age_cat, gender) %>% 
+      summarize(across(v, ~median(.x, na.rm = TRUE))) %>% 
+      rename(median = contains("v")) %>%
+      mutate(metric = var)
+  }
+
+means_df =
+  map_dfr(.x = pa_old %>% select(contains("bout"), starts_with("x"), total, mean, mvpa, mod, vig) %>% colnames(),
+          .f = calc_by_age, df = survey_design)
+
+
+small = 
+  means_df %>%
+  pivot_wider(names_from = gender, values_from = c(median)) 
+
+small %>% 
+  select(metric, age_cat, Female, Male) %>% 
+  group_by(metric) %>% 
+  gt() %>% 
+  tab_style(
+    # Style to apply when conditions are met
+    style = cell_fill(color = "lightpink"),
+    locations = cells_body(
+      rows = Female > Male 
+    )
+  ) %>% 
+  tab_style(
+    # Style to apply when conditions are met
+    style = cell_fill(color = "lightblue"),
+    locations = cells_body(
+      rows = Female < Male 
+    )
+  )
+  
+
+
+```
+
+### Stratified by wave 
+
+
+::: {.panel-tabset}
+
+#### 2003-2004
+
+```{r}
+#| class: output 
+survey_design =
+  df_small %>%
+  filter(data_release_cycle == 3) %>%
+  mutate(age_cat = cut(age_in_years_at_screening,
+                       breaks=c(18, 30, seq(40, 80, 10)))) %>%
+  mutate(weight = full_sample_2_year_mec_exam_weight,
+         weight_norm = weight / mean(weight)) %>%
+  ungroup()  %>%
+  survey::svydesign(
+    id = ~ masked_variance_pseudo_psu,
+    strata = ~ masked_variance_pseudo_stratum,
+    weights = ~ weight_norm,
+    data = .,
+    nest = TRUE
+  )
+
+calc_by_age =
+  function(var, df) {
+    formula = as.formula(paste("~", var))
+    total_by_age_gender = svyby(formula,
+                                ~ age_cat + gender,
+                                df,
+                                svymean) %>%
+      rename(mean = contains(var)) %>%
+      mutate(metric = var)
+  }
+
+means_df =
+  map_dfr(.x = pa_old %>% select(contains("bout"), starts_with("x"), total, mean, mvpa, mod, vig) %>% colnames(),
+          .f = calc_by_age, df = survey_design)
+
+
+small = 
+  means_df %>%
+  pivot_wider(names_from = gender, values_from = c(mean, se)) %>% 
+  mutate(val_female = paste0(round(mean_Female), " (", round(mean_Female - 1.96 * se_Female), ",", round(mean_Female + 1.96 * se_Female), ")"),
+         val_male = paste0(round(mean_Male), " (", round(mean_Male - 1.96 * se_Female), ",", round(mean_Male + 1.96 * se_Male), ")"))
+
+# test = svyttest(mvpa_montoye ~ gender, survey_design)
+pvals = c()
+for(i in 1:nrow(small)){
+  row = means_df[i,]
+  cat = row$age_cat
+  var = row$metric
+  survey_design =
+    df_small %>%
+    filter(age_in_years_at_screening >= 18 & data_release_cycle == 3) %>%
+    mutate(age_cat = cut(age_in_years_at_screening,
+                         breaks=c(18, 30, seq(40, 80, 10)))) %>%
+    filter(age_cat == cat) %>%
+    mutate(weight = full_sample_2_year_mec_exam_weight / 2,
+           weight_norm = weight / mean(weight)) %>%
+    ungroup()  %>%
+    survey::svydesign(
+      id = ~ masked_variance_pseudo_psu,
+      strata = ~ masked_variance_pseudo_stratum,
+      weights = ~ weight_norm,
+      data = .,
+      nest = TRUE
+    )
+  formula = as.formula(paste(var,  "~ gender"))
+  test = svyttest(formula, survey_design)
+  pvals = append(pvals, unname(test$p.value))
+}
+
+small %>% 
+  select(metric, age_cat, Female = val_female, Male = val_male, mean_Female, mean_Male) %>% 
+  bind_cols(p = pvals) %>% 
+  mutate(pval = if_else(p < 0.001, "<0.001", format.pval(p, digits = 2))) %>% 
+  # mutate(metric = factor(metric, 
+  #                        labels = c("MVPA (min)", 
+  #                                   "VPA (min)", "Time <1000",
+  #                                   "Time [1000,2000]", "Time (2000,3000]", "Time (3000,4000]", "Time (4000,5000]", "Time (5000,6000]", "Time (6000,7000]", "Time (7000,8000]", "Time (8000,9000]", "Time >9000", "Total AC", "Mean AC", "Total MIMS"))) %>% 
+  group_by(metric) %>% 
+  gt() %>% 
+  cols_hide(c("mean_Female", "mean_Male", "p")) %>% 
+  tab_style(
+    # Style to apply when conditions are met
+    style = cell_fill(color = "lightpink"),
+    locations = cells_body(
+      rows = mean_Female > mean_Male & p < 0.05
+    )
+  ) %>% 
+  tab_style(
+    # Style to apply when conditions are met
+    style = cell_fill(color = "lightblue"),
+    locations = cells_body(
+      rows = mean_Female < mean_Male & p < 0.05
+    )
+  )
+  
+
+
+```
+
+#### 2005-2006
+
+```{r}
+#| class: output 
+survey_design =
+  df_small %>%
+  filter(data_release_cycle == 4) %>%
+  mutate(age_cat = cut(age_in_years_at_screening,
+                       breaks=c(18, 30, seq(40, 80, 10)))) %>%
+  mutate(weight = full_sample_2_year_mec_exam_weight,
+         weight_norm = weight / mean(weight)) %>%
+  ungroup()  %>%
+  survey::svydesign(
+    id = ~ masked_variance_pseudo_psu,
+    strata = ~ masked_variance_pseudo_stratum,
+    weights = ~ weight_norm,
+    data = .,
+    nest = TRUE
+  )
+
+calc_by_age =
+  function(var, df) {
+    formula = as.formula(paste("~", var))
+    total_by_age_gender = svyby(formula,
+                                ~ age_cat + gender,
+                                df,
+                                svymean) %>%
+      rename(mean = contains(var)) %>%
+      mutate(metric = var)
+  }
+
+means_df =
+  map_dfr(.x = pa_old %>% select(contains("bout"), starts_with("x"), total, mean, mvpa, mod, vig) %>% colnames(),
+          .f = calc_by_age, df = survey_design)
+
+
+small = 
+  means_df %>%
+  pivot_wider(names_from = gender, values_from = c(mean, se)) %>% 
+  mutate(val_female = paste0(round(mean_Female), " (", round(mean_Female - 1.96 * se_Female), ",", round(mean_Female + 1.96 * se_Female), ")"),
+         val_male = paste0(round(mean_Male), " (", round(mean_Male - 1.96 * se_Female), ",", round(mean_Male + 1.96 * se_Male), ")"))
+
+# test = svyttest(mvpa_montoye ~ gender, survey_design)
+pvals = c()
+for(i in 1:nrow(small)){
+  row = means_df[i,]
+  cat = row$age_cat
+  var = row$metric
+  survey_design =
+    df_small %>%
+    filter(age_in_years_at_screening >= 18 & data_release_cycle == 4) %>%
+    mutate(age_cat = cut(age_in_years_at_screening,
+                         breaks=c(18, 30, seq(40, 80, 10)))) %>%
+    filter(age_cat == cat) %>%
+    mutate(weight = full_sample_2_year_mec_exam_weight / 2,
+           weight_norm = weight / mean(weight)) %>%
+    ungroup()  %>%
+    survey::svydesign(
+      id = ~ masked_variance_pseudo_psu,
+      strata = ~ masked_variance_pseudo_stratum,
+      weights = ~ weight_norm,
+      data = .,
+      nest = TRUE
+    )
+  formula = as.formula(paste(var,  "~ gender"))
+  test = svyttest(formula, survey_design)
+  pvals = append(pvals, unname(test$p.value))
+}
+
+small %>% 
+  select(metric, age_cat, Female = val_female, Male = val_male, mean_Female, mean_Male) %>% 
+  bind_cols(p = pvals) %>% 
+  mutate(pval = if_else(p < 0.001, "<0.001", format.pval(p, digits = 2))) %>% 
+  # mutate(metric = factor(metric, 
+  #                        labels = c("MVPA (min)", 
+  #                                   "VPA (min)", "Time <1000",
+  #                                   "Time [1000,2000]", "Time (2000,3000]", "Time (3000,4000]", "Time (4000,5000]", "Time (5000,6000]", "Time (6000,7000]", "Time (7000,8000]", "Time (8000,9000]", "Time >9000", "Total AC", "Mean AC", "Total MIMS"))) %>% 
+  group_by(metric) %>% 
+  gt() %>% 
+  cols_hide(c("mean_Female", "mean_Male", "p")) %>% 
+  tab_style(
+    # Style to apply when conditions are met
+    style = cell_fill(color = "lightpink"),
+    locations = cells_body(
+      rows = mean_Female > mean_Male & p < 0.05
+    )
+  ) %>% 
+  tab_style(
+    # Style to apply when conditions are met
+    style = cell_fill(color = "lightblue"),
+    locations = cells_body(
+      rows = mean_Female < mean_Male & p < 0.05
+    )
+  )
+  
+
+
+
+```
+
+:::
+
+## Plots 
+
+### Distributions
+
+```{r}
+pa_old %>% 
+  left_join(demo) %>% 
+  filter(age_in_years_at_screening >= 18) %>% 
+  pivot_longer(cols = c(mvpa, mvpa_bout, vig, vig_bout, mean)) %>% 
+  mutate(name = factor(name, labels = c("Mean AC", "MVPA (min)", "MVPA (10 min bout min)", "VPA (min)", "VPA (10 min bout min)"))) %>% 
+  ggplot(aes(x = value, color = gender)) + 
+  geom_density() + 
+  facet_wrap(.~name, scales = "free") + 
+  scale_color_manual(values = c(col1, col2), name = "")+
+  theme(legend.position = c(0.9, 0.2)) + 
+  labs(x = "Value", y = "Density")
+
+```
+
+We see that the data are very highly skewed, so we can Winsorize at the 99th percentile: 
+
+```{r}
+pa_old_win = 
+  pa_old %>% 
+    left_join(demo) %>% 
+  filter(age_in_years_at_screening >= 18) %>% 
+  mutate(across(c(mvpa, mod, vig, mean, total, mvpa_bout, vig_bout),
+                ~DescTools::Winsorize(.x, quantile(.x, probs = c(0, 0.99)))))
+
+pa_old_win %>% 
+  pivot_longer(cols = c(mvpa, mvpa_bout, vig, vig_bout, mean)) %>% 
+  mutate(name = factor(name, labels = c("Mean AC", "MVPA (min)", "MVPA (10 min bout min)", "VPA (min)", "VPA (10 min bout min)"))) %>% 
+  ggplot(aes(x = value, color = gender)) + 
+  geom_density() + 
+  facet_wrap(.~name, scales = "free") + 
+  scale_color_manual(values = c(col1, col2), name = "")+
+  theme(legend.position = c(0.9, 0.2)) + 
+  labs(x = "Value", y = "Density")
+
+```
+
+
+### Smoothed, unweighted 
+
+
+```{r}
+
+pa_old_win %>%
+  pivot_longer(cols = c(contains("bout"), vig, mvpa)) %>% 
+  mutate(name = factor(name, labels = c("MVPA", "MVPA 10 min bout", "VPA", "VPA 10 min bout"))) %>%
+  ggplot(aes(x = age_in_years_at_screening, y = value, color = gender)) +
+  geom_jitter(alpha = .1, size = .7, width = .25) +
+  geom_smooth(se = F) +
+  facet_wrap(name~., scales = "free_y") + 
+  labs(x = "Age", y = "Minutes", color = "")+
+  scale_color_manual(values = c(col1, col2)) +
+  theme(legend.position = c(0.9, 0.9),
+        legend.title = element_blank())
+
+
+
+# pa_old_win %>%
+#   pivot_longer(cols = c("mvpa", "vig", "mod")) %>% 
+#   mutate(name = factor(name, labels = c("Mod", "MVPA", "VPA"))) %>% 
+#   ggplot(aes(x = age_in_years_at_screening, y = value, color = gender)) +
+#   geom_jitter(alpha = .1, size = .7, width = .25) +
+#   geom_smooth(se = F) +
+#   facet_grid(name~data_release_cycle, scales = "free_y") + 
+#   labs(x = "Age", y = "Minutes", color = "")+
+#   scale_color_manual(values = c(col1, col2)) +
+#   theme(legend.position = c(0.9, 0.9),
+#         legend.title = element_blank())
+
+pa_old_win %>%
+  pivot_longer(cols = starts_with("x")) %>% 
+  mutate(name = factor(
+    name,
+    levels = c(
+      "x0_5",
+      "x5_10",
+      "x10_25",
+      "x25_50",
+      "x50_75",
+      "x75_100" ,
+      "x100_150",
+      "x150_200",
+      "x200_500" ,
+      "x500_1e_03",
+      "x1e_03_2e_03",
+      "x2e_03_4e_03",
+      "x4e_03_6e_03",
+      "x6e_03_inf"
+    )
+  )) %>% 
+  ggplot(aes(x = age_in_years_at_screening, y = value, color = gender)) +
+  geom_jitter(alpha = .1, size = .7, width = .25) +
+  geom_smooth(se = F) +
+  facet_wrap(name~., scales = "free_y") + 
+  labs(x = "Age", y = "Minutes", color = "")+
+  scale_color_manual(values = c(col1, col2)) +
+  theme(legend.position = "bottom",
+        legend.title = element_blank())
+
+```
+
+### Smoothed, weighted 
+
+```{r}
+survey_design =
+  df_small %>%
+  mutate(across(c(mvpa, mod, vig, mean, total, starts_with("x"), mvpa_bout, vig_bout),
+                ~DescTools::Winsorize(.x, quantile(.x, probs = c(0, 0.99))))) %>% 
+  filter(age_in_years_at_screening >= 18) %>%
+  mutate(weight = full_sample_2_year_mec_exam_weight / 2,
+         weight_norm = weight / mean(weight)) %>%
+  ungroup()  %>%
+  survey::svydesign(
+    id = ~ masked_variance_pseudo_psu,
+    strata = ~ masked_variance_pseudo_stratum,
+    weights = ~ weight_norm,
+    data = .,
+    nest = TRUE
+  )
+
+
+calc_by_age =
+  function(var, df) {
+    # var = "total_oaksteps"
+    formula = as.formula(paste("~", var))
+    total_by_age_gender = svyby(formula,
+                                ~ age_in_years_at_screening + gender,
+                                df,
+                                svymean) %>%
+      rename(mean = contains(var)) %>%
+      mutate(metric = var)
+  }
+
+means_df =
+  map_dfr(.x = pa_old %>% select(contains("bout"), mvpa, mod, vig, mean, total) %>% colnames(),
+          .f = calc_by_age, df = survey_design)
+
+# get smooths for means and confidence intervals
+models = means_df %>%
+  mutate(lb = mean - 1.96 * se,
+         ub = mean + 1.96 * se) %>%
+  tidyr::nest(data = -c(metric, gender)) %>%
+  dplyr::mutate(
+    # Perform loess calculation on each group
+    m = purrr::map(data, loess,
+                   formula = mean ~ age_in_years_at_screening, span = .75),
+    # Retrieve the fitted values from each model
+    fitted_mean = purrr::map(m, `[[`, "fitted"),
+    l = purrr::map(data, loess,
+                   formula = lb ~ age_in_years_at_screening, span = .75),
+    # Retrieve the fitted values from each model
+    fitted_lb = purrr::map(l, `[[`, "fitted"),
+    u = purrr::map(data, loess,
+                   formula = ub ~ age_in_years_at_screening, span = .75),
+    # Retrieve the fitted values from each model
+    fitted_ub = purrr::map(u, `[[`, "fitted")
+  )
+
+# Apply fitted y's as a new column
+results = models %>%
+  dplyr::select(-m, -l, -u) %>%
+  tidyr::unnest(cols = c(data, contains("fitted")))
+
+results %>%
+  mutate(metric = factor(metric, labels = c("Mean AC", "MPA (min)", "MVPA (min)", "MVPA 10 min bout (min)", "Total AC", "VPA (min)", "VPA 10 min bout (min)"))) %>%
+    ggplot(aes(x = age_in_years_at_screening, y = fitted_mean,
+             ymin = fitted_lb, ymax = fitted_ub, color = gender, fill = gender)) +
+  facet_wrap(. ~ metric, scales = "free_y") +
+  geom_line(linewidth = 1) +
+  geom_ribbon(alpha = .2, linetype = 0) +
+  theme_light() +
+  theme(legend.position = "bottom",
+        legend.title = element_blank(),
+        text =element_text(size = 14),
+        strip.text = element_text(size = 12),
+        panel.grid.minor = element_blank()) +
+  labs(x = "Age (years)", y = "Mean Daily Minutes",
+       title = "Smoothed survey weighted mean daily minutes by age ")+
+  scale_x_continuous(breaks=seq(20,80,10)) +
+  scale_y_continuous(breaks=seq(0,600,30)) + 
+  scale_color_manual(values = c(col1, col2))+
+  scale_fill_manual(values = c(col1, col2))
+
+means_df =
+  map_dfr(.x = pa_old %>% select(starts_with("x")) %>% colnames(),
+          .f = calc_by_age, df = survey_design)
+
+# get smooths for means and confidence intervals
+models = means_df %>%
+  mutate(lb = mean - 1.96 * se,
+         ub = mean + 1.96 * se) %>%
+  tidyr::nest(data = -c(metric, gender)) %>%
+  dplyr::mutate(
+    # Perform loess calculation on each group
+    m = purrr::map(data, loess,
+                   formula = mean ~ age_in_years_at_screening, span = .75),
+    # Retrieve the fitted values from each model
+    fitted_mean = purrr::map(m, `[[`, "fitted"),
+    l = purrr::map(data, loess,
+                   formula = lb ~ age_in_years_at_screening, span = .75),
+    # Retrieve the fitted values from each model
+    fitted_lb = purrr::map(l, `[[`, "fitted"),
+    u = purrr::map(data, loess,
+                   formula = ub ~ age_in_years_at_screening, span = .75),
+    # Retrieve the fitted values from each model
+    fitted_ub = purrr::map(u, `[[`, "fitted")
+  )
+
+# Apply fitted y's as a new column
+results = models %>%
+  dplyr::select(-m, -l, -u) %>%
+  tidyr::unnest(cols = c(data, contains("fitted")))
+
+results %>%
+   mutate(metric = factor(
+    metric,
+    levels = c(
+      "x0_5",
+      "x5_10",
+      "x10_25",
+      "x25_50",
+      "x50_75",
+      "x75_100" ,
+      "x100_150",
+      "x150_200",
+      "x200_500" ,
+      "x500_1e_03",
+      "x1e_03_2e_03",
+      "x2e_03_4e_03",
+      "x4e_03_6e_03",
+      "x6e_03_inf"
+    )
+  )) %>% 
+    ggplot(aes(x = age_in_years_at_screening, y = fitted_mean,
+             ymin = fitted_lb, ymax = fitted_ub, color = gender, fill = gender)) +
+  facet_wrap(. ~ metric, scales = "free_y") +
+  geom_line(linewidth = 1) +
+  geom_ribbon(alpha = .2, linetype = 0) +
+  theme_light() +
+  theme(legend.position = "bottom",
+        legend.title = element_blank(),
+        text =element_text(size = 14),
+        strip.text = element_text(size = 12),
+        panel.grid.minor = element_blank()) +
+  labs(x = "Age (years)", y = "Mean Daily Minutes",
+       title = "Smoothed survey weighted mean daily minutes by age")+
+  scale_x_continuous(breaks=seq(20,80,10)) +
+  scale_color_manual(values = c(col1, col2))+
+  scale_fill_manual(values = c(col1, col2))
+```
+
+## Investigating outliers
+
+```{r}
+#| class: output
+#| 
+outliers = 
+  pa_old %>% 
+  left_join(demo) %>% 
+  filter(age_in_years_at_screening >= 18) %>% 
+  arrange(desc(total)) %>% 
+  slice(1:10) 
+
+# pa_old %>% 
+#   arrange(desc(mvpa)) %>% 
+#   slice(1:10) %>% 
+#   select(SEQN, total, mean, mvpa)
+
+# by day 
+# pa_byday = readRDS(here::here("data", "accelerometry", 
+#                               "summarized", "pa_summary_AC_C_D.rds")) %>% 
+#   mutate(SEQN = as.character(SEQN)) 
+# 
+# pa_byday %>% 
+#   filter(SEQN == "26729") %>% 
+#   select(SEQN, PAXDAY, mod, vig, mvpa)
+
+minute_level = readRDS(here::here("data", "accelerometry", "minute_level", "NHANES_1440_C_PAXINTEN.rds")) %>% 
+  bind_rows(readRDS(here::here("data", "accelerometry", "minute_level", "NHANES_1440_D_PAXINTEN.rds")))
+
+for(sub in outliers$SEQN){
+  temp = 
+    minute_level %>% 
+    filter(SEQN == sub)
+  
+  mvpa = round(outliers %>% filter(SEQN == sub) %>% pull(mvpa), 0)
+  age = demo %>% filter(SEQN == sub) %>% pull(age_in_years_at_screening)
+  sex = demo %>% filter(SEQN == sub) %>% pull(gender)
+  p = 
+    temp %>% 
+    pivot_longer(cols = starts_with("min")) %>% 
+    mutate(m = sub(".*min\\_", "", name) %>% as.numeric()) %>%
+    ggplot(aes(x = m, y = value)) + 
+    geom_line() + 
+    facet_grid(PAXDAY~.) + 
+    geom_hline(aes(yintercept = 2020), color = "lightblue", linetype = "dashed") + 
+    scale_x_continuous(breaks=seq(0,1440,120), labels =seq(0,24,2)) + 
+    labs(x = "Hour of Day", y = "Counts", title = paste0("SEQN = ", sub, " MVPA = ", mvpa),
+         subtitle = paste0("Age = ", age, " Sex = ", sex))
+  
+  print(p)
+}
+
+```
+
+
+
+
+# NHANES 2011-2014
+
+```{r}
+#| cache: false 
+# load packages 
+
+
+pa = readRDS(here::here("data", "accelerometry", 
+                              "summarized", "pa_summary_AC.rds")) %>% 
+  mutate(SEQN = as.character(SEQN)) %>% 
+  group_by(SEQN) %>%
+  summarize(across(-PAXDAYM, ~mean(.x, na.rm = TRUE))) 
+
+days = read_csv(here::here("data", "accelerometry", "inclusion_summary.csv.gz"))
+
+wear_gh = 
+  days %>% 
+  group_by(SEQN) %>% 
+  summarize(wear_mins = mean(non_flag_wear)) %>% 
+  mutate(SEQN = as.character(SEQN))
+
+demo_gh = readRDS(here::here("data", "demographics",  "covariates_accel_mortality_df.rds")) %>% 
+  select(-contains("peak"), -contains("total_"))
+
+  
+```
+
+
+## Survey Weighted Physical Activity Summaries by Sex 
+
+```{r}
+df_small_gh = pa %>% 
+  left_join(demo_gh) %>% 
+  left_join(wear_gh) %>% 
+  filter(age_in_years_at_screening >= 18) %>%
+  select(SEQN,
+         data_release_cycle,
+         gender,
+         wear_mins,
+         masked_variance_pseudo_psu,
+         masked_variance_pseudo_stratum,
+         full_sample_2_year_interview_weight,
+         full_sample_2_year_mec_exam_weight,
+         age_in_years_at_screening,
+         total, 
+         mean,
+         mvpa_montoye, 
+         mod_montoye,
+         vig_montoye,
+         mvpa_montoye_bout,
+         vig_montoye_bout,
+         starts_with("x"),
+         missing_ac = na) 
+labs = c("SEQN", "Data release cycle", "Gender",  "Wear minutes",
+         "Pseudo PSU",
+         "Psueudo stratum",
+         "2 yr int weight", "2 yr exam weight",
+         "Age", "Total AC", "Mean AC", "MVPA minutes",  "Moderate minutes", "Vigorous minutes",
+         "MVPA (10 min bout)",
+         "Vig (10 min bout)",
+         "Time <100", "Time [100,500]","Time (500,1000]","Time (1000,2000]", "Time (2000,3000]", "Time (3000,4000]", "Time (4000,5000]", "Time (5000,6000]", "Time (6000,7000]",  "Time (7000,8000]", "Time (8000,9000]", "Time >9000", "Missing AC") 
+
+names(labs) = colnames(df_small_gh)
+
+df_small_gh =
+  df_small_gh %>%
+  labelled::set_variable_labels(!!!labs)
+
+df_svy =
+  df_small_gh %>% 
+  mutate(WTMEC4YR = full_sample_2_year_mec_exam_weight/2,
+         WTMEC4YR_norm = WTMEC4YR/mean(WTMEC4YR, na.rm = TRUE)) %>%
+  svydesign(ids = ~masked_variance_pseudo_psu, weights = ~WTMEC4YR_norm,
+            strata = ~masked_variance_pseudo_stratum, data=., nest=TRUE)
+
+# survey weighted table
+df_svy %>%
+  tbl_svysummary(
+    by = gender,
+    include = -c(SEQN, data_release_cycle, masked_variance_pseudo_psu, masked_variance_pseudo_stratum, full_sample_2_year_interview_weight, full_sample_2_year_mec_exam_weight, WTMEC4YR, WTMEC4YR_norm),
+    statistic = list(
+      all_continuous() ~ "{mean} ({sd})",
+      all_categorical() ~ "{n} ({p}%)"
+    ),
+    digits = all_continuous() ~ 0,
+    missing_text = "Missing",
+  ) %>%
+  add_overall() %>%
+  add_p()
+
+```
+
+### Stratified by wave 
+
+::: {.panel-tabset}
+
+#### 2011-2012
+
+```{r}
+df_svy =
+  df_small_gh %>% 
+  filter(data_release_cycle == 7) %>%
+  mutate(WTMEC4YR = full_sample_2_year_mec_exam_weight,
+         WTMEC4YR_norm = WTMEC4YR/mean(WTMEC4YR, na.rm = TRUE)) %>%
+  svydesign(ids = ~masked_variance_pseudo_psu, weights = ~WTMEC4YR_norm,
+            strata = ~masked_variance_pseudo_stratum, data=., nest=TRUE)
+
+# survey weighted table
+df_svy %>%
+  tbl_svysummary(
+    by = gender,
+    include = -c(SEQN, data_release_cycle, masked_variance_pseudo_psu, masked_variance_pseudo_stratum, full_sample_2_year_interview_weight, full_sample_2_year_mec_exam_weight, WTMEC4YR, WTMEC4YR_norm),
+    statistic = list(
+      all_continuous() ~ "{mean} ({sd})",
+      all_categorical() ~ "{n} ({p}%)"
+    ),
+    digits = all_continuous() ~ 0,
+    missing_text = "Missing",
+  ) %>%
+  add_overall() %>%
+  add_p()
+```
+
+#### 2013-2014
+
+```{r}
+df_svy =
+  df_small_gh %>% 
+  filter(data_release_cycle == 8) %>%
+  mutate(WTMEC4YR = full_sample_2_year_mec_exam_weight,
+         WTMEC4YR_norm = WTMEC4YR/mean(WTMEC4YR, na.rm = TRUE)) %>%
+  svydesign(ids = ~masked_variance_pseudo_psu, weights = ~WTMEC4YR_norm,
+            strata = ~masked_variance_pseudo_stratum, data=., nest=TRUE)
+
+# survey weighted table
+df_svy %>%
+  tbl_svysummary(
+    by = gender,
+    include = -c(SEQN, data_release_cycle, masked_variance_pseudo_psu, masked_variance_pseudo_stratum, full_sample_2_year_interview_weight, full_sample_2_year_mec_exam_weight, WTMEC4YR, WTMEC4YR_norm),
+    statistic = list(
+      all_continuous() ~ "{mean} ({sd})",
+      all_categorical() ~ "{n} ({p}%)"
+    ),
+    digits = all_continuous() ~ 0,
+    missing_text = "Missing",
+  ) %>%
+  add_overall() %>%
+  add_p()
+
+```
+
+::: 
+
+## Survey-Weighted Physical Activity Summaries by Sex and Age 
+
+```{r}
+#| class: output 
+survey_design =
+  df_small_gh %>%
+  mutate(age_cat = cut(age_in_years_at_screening,
+                       breaks=c(18, 30, seq(40, 80, 10)))) %>%
+  mutate(weight = full_sample_2_year_mec_exam_weight / 2,
+         weight_norm = weight / mean(weight)) %>%
+  ungroup()  %>%
+  survey::svydesign(
+    id = ~ masked_variance_pseudo_psu,
+    strata = ~ masked_variance_pseudo_stratum,
+    weights = ~ weight_norm,
+    data = .,
+    nest = TRUE
+  )
+
+calc_by_age =
+  function(var, df) {
+    formula = as.formula(paste("~", var))
+    total_by_age_gender = svyby(formula,
+                                ~ age_cat + gender,
+                                df,
+                                svymean) %>%
+      rename(mean = contains(var)) %>%
+      mutate(metric = var)
+  }
+
+means_df =
+  map_dfr(.x = pa %>% select(total, 
+         mean,
+         mvpa_montoye, 
+         mod_montoye,
+         vig_montoye,
+         mvpa_montoye_bout,
+         vig_montoye_bout,
+         starts_with("x")) %>% colnames(),
+          .f = calc_by_age, df = survey_design)
+
+
+small = 
+  means_df %>%
+  pivot_wider(names_from = gender, values_from = c(mean, se)) %>% 
+  mutate(val_female = paste0(round(mean_Female), " (", round(mean_Female - 1.96 * se_Female), ",", round(mean_Female + 1.96 * se_Female), ")"),
+         val_male = paste0(round(mean_Male), " (", round(mean_Male - 1.96 * se_Female), ",", round(mean_Male + 1.96 * se_Male), ")"))
+
+# test = svyttest(mvpa_montoye ~ gender, survey_design)
+pvals = c()
+for(i in 1:nrow(small)){
+  row = means_df[i,]
+  cat = row$age_cat
+  var = row$metric
+  survey_design =
+    df_small_gh %>%
+    mutate(age_cat = cut(age_in_years_at_screening,
+                         breaks=c(18, 30, seq(40, 80, 10)))) %>%
+    filter(age_cat == cat) %>%
+    mutate(weight = full_sample_2_year_mec_exam_weight / 2,
+           weight_norm = weight / mean(weight)) %>%
+    ungroup()  %>%
+    survey::svydesign(
+      id = ~ masked_variance_pseudo_psu,
+      strata = ~ masked_variance_pseudo_stratum,
+      weights = ~ weight_norm,
+      data = .,
+      nest = TRUE
+    )
+  formula = as.formula(paste(var,  "~ gender"))
+  test = svyttest(formula, survey_design)
+  pvals = append(pvals, unname(test$p.value))
+}
+
+small %>% 
+  select(metric, age_cat, Female = val_female, Male = val_male, mean_Female, mean_Male) %>% 
+  bind_cols(p = pvals) %>% 
+  mutate(pval = if_else(p < 0.001, "<0.001", format.pval(p, digits = 2))) %>% 
+  # mutate(metric = factor(metric, 
+  #                        labels = c("MVPA (min)", 
+  #                                   "VPA (min)", "Time <1000",
+  #                                   "Time [1000,2000]", "Time (2000,3000]", "Time (3000,4000]", "Time (4000,5000]", "Time (5000,6000]", "Time (6000,7000]", "Time (7000,8000]", "Time (8000,9000]", "Time >9000", "Total AC", "Mean AC", "Total MIMS"))) %>% 
+  group_by(metric) %>% 
+  gt() %>% 
+  cols_hide(c("mean_Female", "mean_Male", "p")) %>% 
+  tab_style(
+    # Style to apply when conditions are met
+    style = cell_fill(color = "lightpink"),
+    locations = cells_body(
+      rows = mean_Female > mean_Male & p < 0.05
+    )
+  ) %>% 
+  tab_style(
+    # Style to apply when conditions are met
+    style = cell_fill(color = "lightblue"),
+    locations = cells_body(
+      rows = mean_Female < mean_Male & p < 0.05
+    )
+  )
+  
+
+
+```
+
+### Stratified by wave 
+
+
+::: {.panel-tabset}
+
+#### 2011-2012
+
+```{r}
+#| class: output
+survey_design =
+  df_small_gh %>%
+  filter(data_release_cycle == 7) %>%
+  mutate(age_cat = cut(age_in_years_at_screening,
+                       breaks=c(18, 30, seq(40, 80, 10)))) %>%
+  mutate(weight = full_sample_2_year_mec_exam_weight,
+         weight_norm = weight / mean(weight)) %>%
+  ungroup()  %>%
+  survey::svydesign(
+    id = ~ masked_variance_pseudo_psu,
+    strata = ~ masked_variance_pseudo_stratum,
+    weights = ~ weight_norm,
+    data = .,
+    nest = TRUE
+  )
+
+calc_by_age =
+  function(var, df) {
+    formula = as.formula(paste("~", var))
+    total_by_age_gender = svyby(formula,
+                                ~ age_cat + gender,
+                                df,
+                                svymean) %>%
+      rename(mean = contains(var)) %>%
+      mutate(metric = var)
+  }
+
+means_df =
+  map_dfr(.x = pa %>% select(total, 
+         mean,
+         mvpa_montoye, 
+         mod_montoye,
+         vig_montoye,
+         mvpa_montoye_bout,
+         vig_montoye_bout,
+         starts_with("x")) %>% colnames(),
+          .f = calc_by_age, df = survey_design)
+small = 
+  means_df %>%
+  pivot_wider(names_from = gender, values_from = c(mean, se)) %>% 
+  mutate(val_female = paste0(round(mean_Female), " (", round(mean_Female - 1.96 * se_Female), ",", round(mean_Female + 1.96 * se_Female), ")"),
+         val_male = paste0(round(mean_Male), " (", round(mean_Male - 1.96 * se_Female), ",", round(mean_Male + 1.96 * se_Male), ")"))
+
+# test = svyttest(mvpa_montoye ~ gender, survey_design)
+pvals = c()
+for(i in 1:nrow(small)){
+  row = means_df[i,]
+  cat = row$age_cat
+  var = row$metric
+  survey_design =
+    df_small_gh %>%
+    filter(age_in_years_at_screening >= 18 & data_release_cycle == 7) %>%
+    mutate(age_cat = cut(age_in_years_at_screening,
+                         breaks=c(18, 30, seq(40, 80, 10)))) %>%
+    filter(age_cat == cat) %>%
+    mutate(weight = full_sample_2_year_mec_exam_weight / 2,
+           weight_norm = weight / mean(weight)) %>%
+    ungroup()  %>%
+    survey::svydesign(
+      id = ~ masked_variance_pseudo_psu,
+      strata = ~ masked_variance_pseudo_stratum,
+      weights = ~ weight_norm,
+      data = .,
+      nest = TRUE
+    )
+  formula = as.formula(paste(var,  "~ gender"))
+  test = svyttest(formula, survey_design)
+  pvals = append(pvals, unname(test$p.value))
+}
+
+small %>% 
+  select(metric, age_cat, Female = val_female, Male = val_male, mean_Female, mean_Male) %>% 
+  bind_cols(p = pvals) %>% 
+  mutate(pval = if_else(p < 0.001, "<0.001", format.pval(p, digits = 2))) %>% 
+  # mutate(metric = factor(metric, 
+  #                        labels = c("MVPA (min)", 
+  #                                   "VPA (min)", "Time <1000",
+  #                                   "Time [1000,2000]", "Time (2000,3000]", "Time (3000,4000]", "Time (4000,5000]", "Time (5000,6000]", "Time (6000,7000]", "Time (7000,8000]", "Time (8000,9000]", "Time >9000", "Total AC", "Mean AC", "Total MIMS"))) %>% 
+  group_by(metric) %>% 
+  gt() %>% 
+  cols_hide(c("mean_Female", "mean_Male", "p")) %>% 
+  tab_style(
+    # Style to apply when conditions are met
+    style = cell_fill(color = "lightpink"),
+    locations = cells_body(
+      rows = mean_Female > mean_Male & p < 0.05
+    )
+  ) %>% 
+  tab_style(
+    # Style to apply when conditions are met
+    style = cell_fill(color = "lightblue"),
+    locations = cells_body(
+      rows = mean_Female < mean_Male & p < 0.05
+    )
+  )
+  
+
+
+```
+
+#### 2013-2014
+
+```{r}
+#| class: output
+survey_design =
+  df_small_gh %>%
+  filter(data_release_cycle == 8) %>%
+  mutate(age_cat = cut(age_in_years_at_screening,
+                       breaks=c(18, 30, seq(40, 80, 10)))) %>%
+  mutate(weight = full_sample_2_year_mec_exam_weight,
+         weight_norm = weight / mean(weight)) %>%
+  ungroup()  %>%
+  survey::svydesign(
+    id = ~ masked_variance_pseudo_psu,
+    strata = ~ masked_variance_pseudo_stratum,
+    weights = ~ weight_norm,
+    data = .,
+    nest = TRUE
+  )
+
+calc_by_age =
+  function(var, df) {
+    formula = as.formula(paste("~", var))
+    total_by_age_gender = svyby(formula,
+                                ~ age_cat + gender,
+                                df,
+                                svymean) %>%
+      rename(mean = contains(var)) %>%
+      mutate(metric = var)
+  }
+
+means_df =
+  map_dfr(.x = pa %>% select(total, 
+         mean,
+         mvpa_montoye, 
+         mod_montoye,
+         vig_montoye,
+         mvpa_montoye_bout,
+         vig_montoye_bout,
+         starts_with("x")) %>% colnames(),
+          .f = calc_by_age, df = survey_design)
+
+small = 
+  means_df %>%
+  pivot_wider(names_from = gender, values_from = c(mean, se)) %>% 
+  mutate(val_female = paste0(round(mean_Female), " (", round(mean_Female - 1.96 * se_Female), ",", round(mean_Female + 1.96 * se_Female), ")"),
+         val_male = paste0(round(mean_Male), " (", round(mean_Male - 1.96 * se_Female), ",", round(mean_Male + 1.96 * se_Male), ")"))
+
+# test = svyttest(mvpa_montoye ~ gender, survey_design)
+pvals = c()
+for(i in 1:nrow(small)){
+  row = means_df[i,]
+  cat = row$age_cat
+  var = row$metric
+  survey_design =
+    df_small_gh %>%
+    filter(age_in_years_at_screening >= 18 & data_release_cycle == 8) %>%
+    mutate(age_cat = cut(age_in_years_at_screening,
+                         breaks=c(18, 30, seq(40, 80, 10)))) %>%
+    filter(age_cat == cat) %>%
+    mutate(weight = full_sample_2_year_mec_exam_weight / 2,
+           weight_norm = weight / mean(weight)) %>%
+    ungroup()  %>%
+    survey::svydesign(
+      id = ~ masked_variance_pseudo_psu,
+      strata = ~ masked_variance_pseudo_stratum,
+      weights = ~ weight_norm,
+      data = .,
+      nest = TRUE
+    )
+  formula = as.formula(paste(var,  "~ gender"))
+  test = svyttest(formula, survey_design)
+  pvals = append(pvals, unname(test$p.value))
+}
+
+small %>% 
+  select(metric, age_cat, Female = val_female, Male = val_male, mean_Female, mean_Male) %>% 
+  bind_cols(p = pvals) %>% 
+  mutate(pval = if_else(p < 0.001, "<0.001", format.pval(p, digits = 2))) %>% 
+  # mutate(metric = factor(metric, 
+  #                        labels = c("MVPA (min)", 
+  #                                   "VPA (min)", "Time <1000",
+  #                                   "Time [1000,2000]", "Time (2000,3000]", "Time (3000,4000]", "Time (4000,5000]", "Time (5000,6000]", "Time (6000,7000]", "Time (7000,8000]", "Time (8000,9000]", "Time >9000", "Total AC", "Mean AC", "Total MIMS"))) %>% 
+  group_by(metric) %>% 
+  gt() %>% 
+  cols_hide(c("mean_Female", "mean_Male", "p")) %>% 
+  tab_style(
+    # Style to apply when conditions are met
+    style = cell_fill(color = "lightpink"),
+    locations = cells_body(
+      rows = mean_Female > mean_Male & p < 0.05
+    )
+  ) %>% 
+  tab_style(
+    # Style to apply when conditions are met
+    style = cell_fill(color = "lightblue"),
+    locations = cells_body(
+      rows = mean_Female < mean_Male & p < 0.05
+    )
+  )
+  
+
+
+
+```
+
+:::
+
+## Plots 
+
+### Distributions
+
+```{r}
+pa %>% 
+  left_join(demo_gh) %>% 
+  filter(age_in_years_at_screening >= 18) %>% 
+  pivot_longer(cols = c(contains("montoye"), mean)) %>% 
+  mutate(name = factor(name, labels = c("LPA", "Mean AC", "MPA", "MVPA", "MVPA 10 min bout", "Sedentary", "VPA", "VPA 10 min bout"))) %>% 
+  ggplot(aes(x = value, color = gender)) + 
+  geom_density() + 
+  facet_wrap(.~name, scales = "free") + 
+  scale_color_manual(values = c(col1, col2), name = "")+
+  theme(legend.position = c(0.9, 0.2))
+
+```
+
+
+
+### Smoothed, unweighted 
+
+
+```{r}
+
+pa %>%
+  left_join(demo_gh) %>% 
+  filter(age_in_years_at_screening >= 18) %>% 
+  pivot_longer(cols = contains("bout")) %>% 
+  mutate(name = factor(name, labels = c("MVPA 10 min Bout", "VPA 10 min Bout"))) %>% 
+  ggplot(aes(x = age_in_years_at_screening, y = value, color = gender)) +
+  geom_jitter(alpha = .1, size = .7, width = .25) +
+  geom_smooth(se = F) +
+  facet_grid(name~., scales = "free_y") +
+  labs(x = "Age", y = "Minutes", color = "")+
+  scale_color_manual(values = c(col1, col2)) +
+  theme(legend.position = c(0.9, 0.9),
+        legend.title = element_blank())
+
+
+
+pa %>%
+  left_join(demo_gh) %>% 
+  filter(age_in_years_at_screening >= 18) %>% 
+  pivot_longer(cols = contains("montoye") & !contains("bout")) %>% 
+  mutate(name = factor(name, labels = c("Light", "Moderate", "MVPA", "Sedentary", "Vigorous"))) %>%
+  ggplot(aes(x = age_in_years_at_screening, y = value, color = gender)) +
+  geom_jitter(alpha = .1, size = .7, width = .25) +
+  geom_smooth(se = F) +
+  facet_grid(name~., scales = "free_y") + 
+  labs(x = "Age", y = "Minutes", color = "")+
+  scale_color_manual(values = c(col1, col2)) +
+  theme(legend.position = c(0.9, 0.9),
+        legend.title = element_blank())
+
+pa %>%
+  left_join(demo_gh) %>% 
+  filter(age_in_years_at_screening >= 18) %>% 
+  pivot_longer(cols = starts_with("x")) %>% 
+  ggplot(aes(x = age_in_years_at_screening, y = value, color = gender)) +
+  geom_jitter(alpha = .1, size = .7, width = .25) +
+  geom_smooth(se = F) +
+  facet_wrap(name~., scales = "free_y") + 
+  labs(x = "Age", y = "Minutes", color = "")+
+  scale_color_manual(values = c(col1, col2)) +
+  theme(legend.position = "bottom",
+        legend.title = element_blank())
+
+```
+
+### Smoothed, weighted 
+
+```{r}
+survey_design =
+  df_small_gh %>%
+  filter(age_in_years_at_screening >= 18) %>%
+  mutate(weight = full_sample_2_year_mec_exam_weight / 2,
+         weight_norm = weight / mean(weight)) %>%
+  ungroup()  %>%
+  survey::svydesign(
+    id = ~ masked_variance_pseudo_psu,
+    strata = ~ masked_variance_pseudo_stratum,
+    weights = ~ weight_norm,
+    data = .,
+    nest = TRUE
+  )
+
+
+calc_by_age =
+  function(var, df) {
+    # var = "total_oaksteps"
+    formula = as.formula(paste("~", var))
+    total_by_age_gender = svyby(formula,
+                                ~ age_in_years_at_screening + gender,
+                                df,
+                                svymean) %>%
+      rename(mean = contains(var)) %>%
+      mutate(metric = var)
+  }
+
+means_df =
+  map_dfr(.x = pa %>% select(total, 
+         mean,
+         mvpa_montoye, 
+         mod_montoye,
+         vig_montoye,
+         mvpa_montoye_bout,
+         vig_montoye_bout,
+         starts_with("x")) %>% colnames(),
+          .f = calc_by_age, df = survey_design)
+
+
+# get smooths for means and confidence intervals
+models = means_df %>%
+  mutate(lb = mean - 1.96 * se,
+         ub = mean + 1.96 * se) %>%
+  tidyr::nest(data = -c(metric, gender)) %>%
+  dplyr::mutate(
+    # Perform loess calculation on each group
+    m = purrr::map(data, loess,
+                   formula = mean ~ age_in_years_at_screening, span = .75),
+    # Retrieve the fitted values from each model
+    fitted_mean = purrr::map(m, `[[`, "fitted"),
+    l = purrr::map(data, loess,
+                   formula = lb ~ age_in_years_at_screening, span = .75),
+    # Retrieve the fitted values from each model
+    fitted_lb = purrr::map(l, `[[`, "fitted"),
+    u = purrr::map(data, loess,
+                   formula = ub ~ age_in_years_at_screening, span = .75),
+    # Retrieve the fitted values from each model
+    fitted_ub = purrr::map(u, `[[`, "fitted")
+  )
+
+# Apply fitted y's as a new column
+results = models %>%
+  dplyr::select(-m, -l, -u) %>%
+  tidyr::unnest(cols = c(data, contains("fitted")))
+
+results %>%
+  filter(!grepl("x", metric)) %>% 
+  # mutate(metric = factor(metric, labels = c("MVPA", "VPA"))) %>% 
+    ggplot(aes(x = age_in_years_at_screening, y = fitted_mean,
+             ymin = fitted_lb, ymax = fitted_ub, color = gender, fill = gender)) +
+  facet_wrap(. ~ metric, scales = "free_y") +
+  geom_line(linewidth = 1) +
+  geom_ribbon(alpha = .2, linetype = 0) +
+  theme_light() +
+  theme(legend.position = "bottom",
+        legend.title = element_blank(),
+        text =element_text(size = 14),
+        strip.text = element_text(size = 12),
+        panel.grid.minor = element_blank()) +
+  labs(x = "Age (years)", y = "Mean Daily Minutes",
+       title = "Smoothed survey weighted mean daily minutes by age ")+
+  scale_x_continuous(breaks=seq(20,80,10)) +
+  scale_y_continuous(breaks=seq(0,600,30)) + 
+  scale_color_manual(values = c(col1, col2))+
+  scale_fill_manual(values = c(col1, col2))
+
+
+results %>% 
+  filter(grepl("x", metric)) %>% 
+    ggplot(aes(x = age_in_years_at_screening, y = fitted_mean,
+             ymin = fitted_lb, ymax = fitted_ub, color = gender, fill = gender)) +
+  facet_wrap(. ~ metric, scales = "free_y") +
+  geom_line(linewidth = 1) +
+  geom_ribbon(alpha = .2, linetype = 0) +
+  theme_light() +
+  theme(legend.position = "bottom",
+        legend.title = element_blank(),
+        text =element_text(size = 14),
+        strip.text = element_text(size = 12),
+        panel.grid.minor = element_blank()) +
+  labs(x = "Age (years)", y = "Mean Daily Minutes",
+       title = "Smoothed survey weighted mean daily minutes by age")+
+  scale_x_continuous(breaks=seq(20,80,10)) +
+  scale_color_manual(values = c(col1, col2))+
+  scale_fill_manual(values = c(col1, col2))
+```
+
+## MIMS 
+
+```{r}
+#| cache: false 
+pa_mims = readRDS(here::here("data", "accelerometry", 
+                              "summarized", "pa_summary_PAXMTSM.rds")) %>% 
+  mutate(SEQN = as.character(SEQN)) %>% 
+  group_by(SEQN) %>%
+  summarize(across(-PAXDAYM, ~mean(.x, na.rm = TRUE))) 
+
+```
+
+```{r}
+df_small_gh_mims = pa_mims %>% 
+  left_join(demo_gh) %>% 
+  filter(age_in_years_at_screening >= 18) %>%
+  select(SEQN,
+         data_release_cycle,
+         gender,
+         masked_variance_pseudo_psu,
+         masked_variance_pseudo_stratum,
+         full_sample_2_year_interview_weight,
+         full_sample_2_year_mec_exam_weight,
+         age_in_years_at_screening,
+         total, 
+         mean,
+         starts_with("x"),
+         missing_mims = na) 
+labs = c("SEQN", "Data release cycle", "Gender",  
+         "Pseudo PSU",
+         "Psueudo stratum",
+         "2 yr int weight", "2 yr exam weight",
+         "Age", "Total MIMS", "Mean MIMS",
+         "Time <2", "Time [2,5]","Time (5,10]","Time (10,15]", "Time (15,20]", "Time (20,30]", "Time (30,40]", "Time (40,50]", "Time (50,60]",  "Time >60", "Missing MIMS") 
+
+names(labs) = colnames(df_small_gh_mims)
+
+df_small_gh_mims =
+  df_small_gh_mims %>%
+  labelled::set_variable_labels(!!!labs)
+
+df_svy =
+  df_small_gh_mims %>% 
+  mutate(WTMEC4YR = full_sample_2_year_mec_exam_weight/2,
+         WTMEC4YR_norm = WTMEC4YR/mean(WTMEC4YR, na.rm = TRUE)) %>%
+  svydesign(ids = ~masked_variance_pseudo_psu, weights = ~WTMEC4YR_norm,
+            strata = ~masked_variance_pseudo_stratum, data=., nest=TRUE)
+
+# survey weighted table
+df_svy %>%
+  tbl_svysummary(
+    by = gender,
+    include = -c(SEQN, data_release_cycle, masked_variance_pseudo_psu, masked_variance_pseudo_stratum, full_sample_2_year_interview_weight, full_sample_2_year_mec_exam_weight, WTMEC4YR, WTMEC4YR_norm),
+    statistic = list(
+      all_continuous() ~ "{mean} ({sd})",
+      all_categorical() ~ "{n} ({p}%)"
+    ),
+    digits = all_continuous() ~ 0,
+    missing_text = "Missing",
+  ) %>%
+  add_overall() %>%
+  add_p()
+
+```
+
+```{r}
+#| class: output 
+
+survey_design =
+  df_small_gh_mims %>%
+  mutate(age_cat = cut(age_in_years_at_screening,
+                       breaks=c(18, 30, seq(40, 80, 10)))) %>%
+  mutate(weight = full_sample_2_year_mec_exam_weight / 2,
+         weight_norm = weight / mean(weight)) %>%
+  ungroup()  %>%
+  survey::svydesign(
+    id = ~ masked_variance_pseudo_psu,
+    strata = ~ masked_variance_pseudo_stratum,
+    weights = ~ weight_norm,
+    data = .,
+    nest = TRUE
+  )
+
+calc_by_age =
+  function(var, df) {
+    formula = as.formula(paste("~", var))
+    total_by_age_gender = svyby(formula,
+                                ~ age_cat + gender,
+                                df,
+                                svymean) %>%
+      rename(mean = contains(var)) %>%
+      mutate(metric = var)
+  }
+
+means_df =
+  map_dfr(.x = pa_mims %>% select(starts_with("x"), total, mean) %>% colnames(),
+          .f = calc_by_age, df = survey_design)
+
+
+small = 
+  means_df %>%
+  pivot_wider(names_from = gender, values_from = c(mean, se)) %>% 
+  mutate(val_female = paste0(round(mean_Female), " (", round(mean_Female - 1.96 * se_Female), ",", round(mean_Female + 1.96 * se_Female), ")"),
+         val_male = paste0(round(mean_Male), " (", round(mean_Male - 1.96 * se_Female), ",", round(mean_Male + 1.96 * se_Male), ")"))
+
+# test = svyttest(mvpa_montoye ~ gender, survey_design)
+pvals = c()
+for(i in 1:nrow(small)){
+  row = means_df[i,]
+  cat = row$age_cat
+  var = row$metric
+  survey_design =
+    df_small_gh_mims %>%
+    mutate(age_cat = cut(age_in_years_at_screening,
+                         breaks=c(18, 30, seq(40, 80, 10)))) %>%
+    filter(age_cat == cat) %>%
+    mutate(weight = full_sample_2_year_mec_exam_weight / 2,
+           weight_norm = weight / mean(weight)) %>%
+    ungroup()  %>%
+    survey::svydesign(
+      id = ~ masked_variance_pseudo_psu,
+      strata = ~ masked_variance_pseudo_stratum,
+      weights = ~ weight_norm,
+      data = .,
+      nest = TRUE
+    )
+  formula = as.formula(paste(var,  "~ gender"))
+  test = svyttest(formula, survey_design)
+  pvals = append(pvals, unname(test$p.value))
+}
+
+small %>% 
+  select(metric, age_cat, Female = val_female, Male = val_male, mean_Female, mean_Male) %>% 
+  bind_cols(p = pvals) %>% 
+  mutate(pval = if_else(p < 0.001, "<0.001", format.pval(p, digits = 2))) %>% 
+  # mutate(metric = factor(metric, 
+  #                        labels = c("MVPA (min)", 
+  #                                   "VPA (min)", "Time <1000",
+  #                                   "Time [1000,2000]", "Time (2000,3000]", "Time (3000,4000]", "Time (4000,5000]", "Time (5000,6000]", "Time (6000,7000]", "Time (7000,8000]", "Time (8000,9000]", "Time >9000", "Total AC", "Mean AC", "Total MIMS"))) %>% 
+  group_by(metric) %>% 
+  gt() %>% 
+  cols_hide(c("mean_Female", "mean_Male", "p")) %>% 
+  tab_style(
+    # Style to apply when conditions are met
+    style = cell_fill(color = "lightpink"),
+    locations = cells_body(
+      rows = mean_Female > mean_Male & p < 0.05
+    )
+  ) %>% 
+  tab_style(
+    # Style to apply when conditions are met
+    style = cell_fill(color = "lightblue"),
+    locations = cells_body(
+      rows = mean_Female < mean_Male & p < 0.05
+    )
+  )
+  
+
+
+```
+
+
+
+```{r}
+
+pa_mims %>%
+  left_join(demo_gh) %>% 
+  filter(age_in_years_at_screening >= 18) %>% 
+  pivot_longer(cols = c(total, mean))  %>%
+  mutate(name = factor(name, labels = c("Mean MIMS", "Total MIMS"))) %>% 
+  ggplot(aes(x = age_in_years_at_screening, y = value, color = gender)) +
+  geom_jitter(alpha = .1, size = .7, width = .25) +
+  geom_smooth(se = F) +
+  facet_wrap(name~., scales = "free_y") + 
+  labs(x = "Age", y = "Value", color = "")+
+  scale_color_manual(values = c(col1, col2)) +
+  theme(legend.position = "bottom",
+        legend.title = element_blank())
+
+
+pa_mims %>%
+  left_join(demo_gh) %>% 
+  filter(age_in_years_at_screening >= 18) %>% 
+  pivot_longer(cols = starts_with("x")) %>% 
+  mutate(name = factor(name, levels = c("x0_2", "x2_5", "x5_10", "x10_15", "x15_20", "x20_30", "x30_40", "x40_50", "x50_60", "x60_inf"))) %>%
+  ggplot(aes(x = age_in_years_at_screening, y = value, color = gender)) +
+  geom_jitter(alpha = .1, size = .7, width = .25) +
+  geom_smooth(se = F) +
+  facet_wrap(name~., scales = "free_y") + 
+  labs(x = "Age", y = "Minutes", color = "")+
+  scale_color_manual(values = c(col1, col2)) +
+  theme(legend.position = "bottom",
+        legend.title = element_blank())
+
+```
+
+
+```{r}
+survey_design =
+  df_small_gh_mims %>%
+  filter(age_in_years_at_screening >= 18) %>%
+  mutate(weight = full_sample_2_year_mec_exam_weight / 2,
+         weight_norm = weight / mean(weight)) %>%
+  ungroup()  %>%
+  survey::svydesign(
+    id = ~ masked_variance_pseudo_psu,
+    strata = ~ masked_variance_pseudo_stratum,
+    weights = ~ weight_norm,
+    data = .,
+    nest = TRUE
+  )
+
+
+calc_by_age =
+  function(var, df) {
+    # var = "total_oaksteps"
+    formula = as.formula(paste("~", var))
+    total_by_age_gender = svyby(formula,
+                                ~ age_in_years_at_screening + gender,
+                                df,
+                                svymean) %>%
+      rename(mean = contains(var)) %>%
+      mutate(metric = var)
+  }
+
+
+means_df =
+  map_dfr(.x = pa_mims %>% select(starts_with("x"), total, mean) %>% colnames(),
+          .f = calc_by_age, df = survey_design)
+
+# get smooths for means and confidence intervals
+models = means_df %>%
+  mutate(lb = mean - 1.96 * se,
+         ub = mean + 1.96 * se) %>%
+  tidyr::nest(data = -c(metric, gender)) %>%
+  dplyr::mutate(
+    # Perform loess calculation on each group
+    m = purrr::map(data, loess,
+                   formula = mean ~ age_in_years_at_screening, span = .75),
+    # Retrieve the fitted values from each model
+    fitted_mean = purrr::map(m, `[[`, "fitted"),
+    l = purrr::map(data, loess,
+                   formula = lb ~ age_in_years_at_screening, span = .75),
+    # Retrieve the fitted values from each model
+    fitted_lb = purrr::map(l, `[[`, "fitted"),
+    u = purrr::map(data, loess,
+                   formula = ub ~ age_in_years_at_screening, span = .75),
+    # Retrieve the fitted values from each model
+    fitted_ub = purrr::map(u, `[[`, "fitted")
+  )
+
+# Apply fitted y's as a new column
+results = models %>%
+  dplyr::select(-m, -l, -u) %>%
+  tidyr::unnest(cols = c(data, contains("fitted")))
+
+results %>% 
+  filter(!grepl("x", metric)) %>% 
+  mutate(metric = factor(metric, labels = c("Mean MIMS", "Total MIMS"))) %>% 
+    ggplot(aes(x = age_in_years_at_screening, y = fitted_mean,
+             ymin = fitted_lb, ymax = fitted_ub, color = gender, fill = gender)) +
+  facet_wrap(. ~ metric, scales = "free_y") +
+  geom_line(linewidth = 1) +
+  geom_ribbon(alpha = .2, linetype = 0) +
+  theme_light() +
+  theme(legend.position = "bottom",
+        legend.title = element_blank(),
+        text =element_text(size = 14),
+        strip.text = element_text(size = 12),
+        panel.grid.minor = element_blank()) +
+  labs(x = "Age (years)", y = "Mean Value",
+       title = "Smoothed survey weighted mean daily minutes by age")+
+  scale_x_continuous(breaks=seq(20,80,10)) +
+  scale_color_manual(values = c(col1, col2))+
+  scale_fill_manual(values = c(col1, col2))
+
+results %>% 
+  filter(grepl("x", metric)) %>% 
+  mutate(metric = factor(metric, levels = c("x0_2", "x2_5", "x5_10", "x10_15", "x15_20", "x20_30", "x30_40", "x40_50", "x50_60", "x60_inf"))) %>% 
+    ggplot(aes(x = age_in_years_at_screening, y = fitted_mean,
+             ymin = fitted_lb, ymax = fitted_ub, color = gender, fill = gender)) +
+  facet_wrap(. ~ metric, scales = "free_y") +
+  geom_line(linewidth = 1) +
+  geom_ribbon(alpha = .2, linetype = 0) +
+  theme_light() +
+  theme(legend.position = "bottom",
+        legend.title = element_blank(),
+        text =element_text(size = 14),
+        strip.text = element_text(size = 12),
+        panel.grid.minor = element_blank()) +
+  labs(x = "Age (years)", y = "Mean Daily Minutes",
+       title = "Smoothed survey weighted mean daily minutes by age")+
+  scale_x_continuous(breaks=seq(20,80,10)) +
+  scale_color_manual(values = c(col1, col2))+
+  scale_fill_manual(values = c(col1, col2))
+
+
+```
+
+# NYFFS 
+
+## Tables 
+
+```{r}
+#| cache: false 
+demo_y = readRDS(here::here("data", "demographics", "subset_Y_tidy.rds")) 
+pa_y = readRDS(here::here("data", "accelerometry", "summarized", 
+                          "pa_summary_AC_paxy.rds")) %>% 
+  mutate(SEQN = as.character(SEQN)) %>% 
+  group_by(SEQN) %>%
+  summarize(across(-PAXDAYM, ~mean(.x, na.rm = TRUE)))
+
+df_small_y = pa_y %>% 
+  left_join(demo_y) %>% 
+  select(SEQN,
+         gender,
+         masked_variance_pseudo_psu,
+         masked_variance_pseudo_stratum,
+         full_sample_interview_weight,
+         full_sample_mec_exam_weight,
+         age_in_years_at_screening,
+         total, 
+         mean,
+         contains("montoye"),
+         starts_with("x")) 
+labs = c("SEQN", "Gender",  
+         "Pseudo PSU",
+         "Psueudo stratum",
+         "2 yr int weight", "2 yr exam weight",
+         "Age", "Total AC", "Mean AC", "Sedentary minutes", "Light minutes",  "Moderate minutes", "Vigorous minutes",
+         "MVPA minutes",
+         "MVPA (10 min bout)",
+         "Vig (10 min bout)",
+         "Time <100", "Time [100,500]","Time (500,1000]","Time (1000,2000]", "Time (2000,3000]", "Time (3000,4000]", "Time (4000,5000]", "Time (5000,6000]", "Time (6000,7000]",  "Time (7000,8000]", "Time (8000,9000]", "Time >9000") 
+
+names(labs) = colnames(df_small_y)
+
+df_small_y =
+  df_small_y %>%
+  labelled::set_variable_labels(!!!labs)
+
+df_svy =
+  df_small_y %>% 
+  select(SEQN,
+         gender,
+         masked_variance_pseudo_psu,
+         masked_variance_pseudo_stratum,
+         full_sample_interview_weight,
+         full_sample_mec_exam_weight,
+         age_in_years_at_screening,
+         total, 
+         mean,
+         mvpa_montoye_bout,
+         vig_montoye_bout,
+         contains("range")) %>% 
+  mutate(WTMEC4YR_norm = full_sample_mec_exam_weight/mean(full_sample_mec_exam_weight, na.rm = TRUE)) %>%
+  svydesign(ids = ~masked_variance_pseudo_psu, weights = ~WTMEC4YR_norm,
+            strata = ~masked_variance_pseudo_stratum, data=., nest=TRUE)
+
+# survey weighted table
+df_svy %>%
+  tbl_svysummary(
+    by = gender,
+    include = -c(SEQN, masked_variance_pseudo_psu, masked_variance_pseudo_stratum, full_sample_interview_weight, full_sample_mec_exam_weight, WTMEC4YR_norm),
+    statistic = list(
+      all_continuous() ~ "{mean} ({sd})",
+      all_categorical() ~ "{n} ({p}%)"
+    ),
+    digits = all_continuous() ~ 0,
+    missing_text = "Missing",
+  ) %>%
+  add_overall() %>%
+  add_p()
+
+```
+
+```{r}
+#| class: output
+survey_design =
+  df_small_y %>%
+  mutate(age_cat = cut(age_in_years_at_screening,
+                       breaks=c(3, 6, 9, 12, 15))) %>%
+  mutate(weight = full_sample_mec_exam_weight,
+         weight_norm = weight / mean(weight)) %>%
+  ungroup()  %>%
+  survey::svydesign(
+    id = ~ masked_variance_pseudo_psu,
+    strata = ~ masked_variance_pseudo_stratum,
+    weights = ~ weight_norm,
+    data = .,
+    nest = TRUE
+  )
+
+calc_by_age =
+  function(var, df) {
+    formula = as.formula(paste("~", var))
+    total_by_age_gender = svyby(formula,
+                                ~ age_cat + gender,
+                                df,
+                                svymean) %>%
+      rename(mean = contains(var)) %>%
+      mutate(metric = var)
+  }
+
+means_df =
+  map_dfr(.x = pa_y %>% select(contains("bout"), contains("x"), contains("montoye")) %>% colnames(),
+          .f = calc_by_age, df = survey_design)
+
+
+small = 
+  means_df %>%
+  pivot_wider(names_from = gender, values_from = c(mean, se)) %>% 
+  mutate(val_female = paste0(round(mean_Female), " (", round(mean_Female - 1.96 * se_Female), ",", round(mean_Female + 1.96 * se_Female), ")"),
+         val_male = paste0(round(mean_Male), " (", round(mean_Male - 1.96 * se_Female), ",", round(mean_Male + 1.96 * se_Male), ")"))
+
+# test = svyttest(mvpa_montoye ~ gender, survey_design)
+pvals = c()
+for(i in 1:nrow(small)){
+  row = means_df[i,]
+  cat = row$age_cat
+  var = row$metric
+  survey_design =
+    df_small_y %>%
+    mutate(age_cat = cut(age_in_years_at_screening,
+                       breaks=c(3, 6, 9, 12, 15))) %>%
+    filter(age_cat == cat) %>%
+    mutate(weight = full_sample_mec_exam_weight,
+           weight_norm = weight / mean(weight)) %>%
+    ungroup()  %>%
+    survey::svydesign(
+      id = ~ masked_variance_pseudo_psu,
+      strata = ~ masked_variance_pseudo_stratum,
+      weights = ~ weight_norm,
+      data = .,
+      nest = TRUE
+    )
+  formula = as.formula(paste(var,  "~ gender"))
+  test = svyttest(formula, survey_design)
+  pvals = append(pvals, unname(test$p.value))
+}
+
+small %>% 
+  select(metric, age_cat, Female = val_female, Male = val_male, mean_Female, mean_Male) %>% 
+  bind_cols(p = pvals) %>% 
+  mutate(pval = if_else(p < 0.001, "<0.001", format.pval(p, digits = 2)))  %>%
+  group_by(metric) %>% 
+  gt() %>% 
+  cols_hide(c("mean_Female", "mean_Male", "p")) %>% 
+  tab_style(
+    # Style to apply when conditions are met
+    style = cell_fill(color = "lightpink"),
+    locations = cells_body(
+      rows = mean_Female > mean_Male & p < 0.05
+    )
+  ) %>% 
+  tab_style(
+    # Style to apply when conditions are met
+    style = cell_fill(color = "lightblue"),
+    locations = cells_body(
+      rows = mean_Female < mean_Male & p < 0.05
+    )
+  )
+  
+
+```
+
+## Smoothed, unweighted 
+
+```{r}
+pa_y %>%
+  left_join(demo_y) %>% 
+  pivot_longer(cols = contains("bout")) %>% 
+  mutate(name = factor(name, labels = c("MVPA", "VPA"))) %>% 
+  ggplot(aes(x = age_in_years_at_screening, y = value, color = gender)) +
+  geom_jitter(alpha = .1, width = .25) +
+  geom_smooth(se = F) +
+  facet_grid(name~., scales = "free_y") + 
+  labs(x = "Age", y = "Minutes in MVPA", color = "")+
+  scale_y_continuous(breaks=seq(0,600,60)) + 
+  scale_color_manual(values = c(col1, col2)) + 
+  theme(legend.position = c(0.9, 0.9),
+        legend.title = element_blank()) + 
+  scale_x_continuous(breaks=seq(3,15,2))
+
+
+
+```
+
+## Smoothed, weighted 
+
+```{r}
+survey_design =
+  df_small_y %>%
+  mutate(weight = full_sample_mec_exam_weight,
+         weight_norm = weight / mean(weight)) %>%
+  ungroup()  %>%
+  survey::svydesign(
+    id = ~ masked_variance_pseudo_psu,
+    strata = ~ masked_variance_pseudo_stratum,
+    weights = ~ weight_norm,
+    data = .,
+    nest = TRUE
+  )
+
+
+calc_by_age =
+  function(var, df) {
+    # var = "total_oaksteps"
+    formula = as.formula(paste("~", var))
+    total_by_age_gender = svyby(formula,
+                                ~ age_in_years_at_screening + gender,
+                                df,
+                                svymean) %>%
+      rename(mean = contains(var)) %>%
+      mutate(metric = var)
+  }
+
+means_df =
+  map_dfr(.x = pa_y %>% select(contains("bout")) %>% colnames(),
+          .f = calc_by_age, df = survey_design)
+
+# get smooths for means and confidence intervals
+models = means_df %>%
+  mutate(lb = mean - 1.96 * se,
+         ub = mean + 1.96 * se) %>%
+  tidyr::nest(data = -c(metric, gender)) %>%
+  dplyr::mutate(
+    # Perform loess calculation on each group
+    m = purrr::map(data, loess,
+                   formula = mean ~ age_in_years_at_screening, span = .75),
+    # Retrieve the fitted values from each model
+    fitted_mean = purrr::map(m, `[[`, "fitted"),
+    l = purrr::map(data, loess,
+                   formula = lb ~ age_in_years_at_screening, span = .75),
+    # Retrieve the fitted values from each model
+    fitted_lb = purrr::map(l, `[[`, "fitted"),
+    u = purrr::map(data, loess,
+                   formula = ub ~ age_in_years_at_screening, span = .75),
+    # Retrieve the fitted values from each model
+    fitted_ub = purrr::map(u, `[[`, "fitted")
+  )
+
+# Apply fitted y's as a new column
+results = models %>%
+  dplyr::select(-m, -l, -u) %>%
+  tidyr::unnest(cols = c(data, contains("fitted")))
+
+results %>%
+  mutate(metric = factor(metric, labels = c("MVPA", "VPA"))) %>% 
+    ggplot(aes(x = age_in_years_at_screening, y = fitted_mean,
+             ymin = fitted_lb, ymax = fitted_ub, color = gender, fill = gender)) +
+  facet_grid(. ~ metric) +
+  geom_line(linewidth = 1) +
+  geom_ribbon(alpha = .2, linetype = 0) +
+  theme_light() +
+  theme(legend.position = "bottom",
+        legend.title = element_blank(),
+        text =element_text(size = 14),
+        strip.text = element_text(size = 12),
+        panel.grid.minor = element_blank()) +
+  labs(x = "Age (years)", y = "Mean Daily Minutes",
+       title = "Smoothed survey weighted mean daily minutes by age ")+
+  scale_x_continuous(breaks=seq(3, 15, 2)) +
+  scale_y_continuous(breaks=seq(0,600,30)) + 
+  scale_color_manual(values = c(col1, col2))+
+  scale_fill_manual(values = c(col1, col2))
+
+means_df =
+  map_dfr(.x = pa_y %>% select(starts_with("x")) %>% colnames(),
+          .f = calc_by_age, df = survey_design)
+
+# get smooths for means and confidence intervals
+models = means_df %>%
+  mutate(lb = mean - 1.96 * se,
+         ub = mean + 1.96 * se) %>%
+  tidyr::nest(data = -c(metric, gender)) %>%
+  dplyr::mutate(
+    # Perform loess calculation on each group
+    m = purrr::map(data, loess,
+                   formula = mean ~ age_in_years_at_screening, span = .75),
+    # Retrieve the fitted values from each model
+    fitted_mean = purrr::map(m, `[[`, "fitted"),
+    l = purrr::map(data, loess,
+                   formula = lb ~ age_in_years_at_screening, span = .75),
+    # Retrieve the fitted values from each model
+    fitted_lb = purrr::map(l, `[[`, "fitted"),
+    u = purrr::map(data, loess,
+                   formula = ub ~ age_in_years_at_screening, span = .75),
+    # Retrieve the fitted values from each model
+    fitted_ub = purrr::map(u, `[[`, "fitted")
+  )
+
+# Apply fitted y's as a new column
+results = models %>%
+  dplyr::select(-m, -l, -u) %>%
+  tidyr::unnest(cols = c(data, contains("fitted")))
+
+results %>% 
+    ggplot(aes(x = age_in_years_at_screening, y = fitted_mean,
+             ymin = fitted_lb, ymax = fitted_ub, color = gender, fill = gender)) +
+  facet_wrap(. ~ metric, scales = "free_y") +
+  geom_line(linewidth = 1) +
+  geom_ribbon(alpha = .2, linetype = 0) +
+  theme_light() +
+  theme(legend.position = "bottom",
+        legend.title = element_blank(),
+        text =element_text(size = 14),
+        strip.text = element_text(size = 12),
+        panel.grid.minor = element_blank()) +
+  labs(x = "Age (years)", y = "Mean Daily Minutes",
+       title = "Smoothed survey weighted mean daily minutes by age ")+
+    scale_x_continuous(breaks=seq(3, 15, 2)) +
+  scale_color_manual(values = c(col1, col2))+
+  scale_fill_manual(values = c(col1, col2))
+```
+
