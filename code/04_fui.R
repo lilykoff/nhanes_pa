@@ -20,7 +20,9 @@ include_days =
   select(SEQN, PAXDAYM)
 
 logac_filt =
-  logac %>% right_join(include_days, by = c("SEQN", "PAXDAYM"))
+  logac %>% right_join(include_days, by = c("SEQN", "PAXDAYM")) %>%
+  left_join(demo_small, by = "SEQN") %>%
+  filter(age >= 18 & age <= 79)
 
 # logac_filt_subj =
 #   logac %>%
@@ -36,8 +38,6 @@ act_mat =
 
 dfmat_1440 =
   logac_filt %>%
-  left_join(demo_small, by = "SEQN") %>%
-  filter(age >= 18 & age <= 79) %>%
   select(-starts_with("min")) %>%
   mutate(ac = act_mat) %>%
   as.data.frame()
