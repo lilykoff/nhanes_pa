@@ -66,7 +66,7 @@ if(!file.exists(here::here("results", "fui_res.rds")) | force){
 if(!file.exists(here::here("results", "fui_res_agecat.rds")) | force){
   dfmat_1440 =
     dfmat_1440 %>%
-    mutate(age_cat = cut(age_in_years_at_screening,
+    mutate(age_cat = cut(age,
                          breaks=c(18, 30, seq(40, 70, 10), 79), include.lowest = TRUE))
 
   fit_fui = fastFMM::fui(ac ~ age_cat*gender + (1|SEQN),
@@ -89,9 +89,17 @@ if(!file.exists(here::here("results", "fui_res_agecat.rds")) | force){
 # plot_obj %>%
 #   keep(is.data.frame) %>%
 #   bind_rows(.id = "var") %>%
-#   mutate(sig = CI.lower.pointwise > 0 | CI.upper.pointwise < 0) %>%
+#   mutate(sig = CI.lower.joint > 0 | CI.upper.joint < 0) %>%
 #   ggplot(aes(x = s, y = beta.hat, group = 1)) +
-#   geom_ribbon(aes(ymin = CI.lower.pointwise, ymax = CI.upper.pointwise),
+#   geom_ribbon(aes(ymin = CI.lower.joint, ymax = CI.upper.joint),
 #               fill = "lightgrey") +
 #   geom_line(aes(col = sig), linewidth = .8) +
-#   facet_wrap( ~ var, scales = "free_y")
+#   facet_wrap( ~ var, scales = "free_y") +
+#   scale_x_continuous(breaks=seq(0, 1440, 120), labels = seq(0, 24, 2)) +
+#   labs(x = "Hour of Day") +
+#   scale_color_brewer(palette= "Dark2", name = "Joint Significance", labels = c("No", "Yes")) +
+#   geom_hline(aes(yintercept = 0), linetype = "dashed") +
+#   theme_light() +
+#   theme(legend.position = "bottom")
+
+
