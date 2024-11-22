@@ -1,5 +1,5 @@
 library(tidyverse)
-force = FALSE
+force = TRUE
 if(!require("fastFMM")) install.packages("fastFMM", dependencies = TRUE)
 library(fastFMM)
 
@@ -37,6 +37,7 @@ act_mat =
 dfmat_1440 =
   logac_filt %>%
   left_join(demo_small, by = "SEQN") %>%
+  filter(age >= 18 & age <= 79) %>%
   select(-starts_with("min")) %>%
   mutate(ac = act_mat) %>%
   as.data.frame()
