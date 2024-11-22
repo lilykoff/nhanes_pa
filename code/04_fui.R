@@ -1,4 +1,5 @@
 library(tidyverse)
+force = FALSE
 if(!require("fastFMM")) install.packages("fastFMM", dependencies = TRUE)
 library(fastFMM)
 
@@ -43,17 +44,44 @@ dfmat_1440 =
 # test_df = dfmat_1440 %>%
 #   slice(1:200)
 
-fit_fui = fastFMM::fui(ac ~ age + gender + (1|SEQN),
-                           data = dfmat_1440,
-                           var = TRUE,
-                           argvals = seq(from = 1, to = 1440, by = 10),
-                           family = "gaussian",
-                           analytic = FALSE,
-                           boot_type = "case",
-                           num_boots = 500)
+if(!file.exists(here::here("results", "fui_res.rds")) | force){
+  fit_fui = fastFMM::fui(ac ~ age + gender + (1|SEQN),
+                         data = dfmat_1440,
+                         var = TRUE,
+                         argvals = seq(from = 1, to = 1440, by = 10),
+                         family = "gaussian",
+                         analytic = FALSE,
+                         boot_type = "case",
+                         num_boots = 500)
 
-saveRDS(fit_fui, here::here("results", "fui_res.rds"))
-plot_obj = fastFMM::plot_fui(fit_fui, return = TRUE)
+  saveRDS(fit_fui, here::here("results", "fui_res.rds"))
+}
+
+# fit_fui = readRDS( here::here("results", "fui_res.rds"))
+# plot_obj = fastFMM::plot_fui(fit_fui, return = TRUE)
+
+
+
+# try with categorical age
+if(!file.exists(here::here("results", "fui_res_agecat.rds")) | force){
+  dfmat_1440 =
+    dfmat_1440 %>%
+    mutate(age_cat = cut(age_in_years_at_screening,
+                         breaks=c(18, 30, seq(40, 70, 10), 79), include.lowest = TRUE))
+
+  fit_fui = fastFMM::fui(ac ~ age_cat*gender + (1|SEQN),
+                         data = dfmat_1440,
+                         var = TRUE,
+                         argvals = seq(from = 1, to = 1440, by = 10),
+                         family = "gaussian",
+                         analytic = FALSE,
+                         boot_type = "case",
+                         num_boots = 500)
+
+  fit_fui = readRDS( here::here("results", "fui_res_agecat.rds"))
+
+}
+
 
 #
 #
