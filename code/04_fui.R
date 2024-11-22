@@ -2,6 +2,7 @@ library(tidyverse)
 force = TRUE
 if(!require("fastFMM")) install.packages("fastFMM", dependencies = TRUE)
 library(fastFMM)
+n_cores = parallel::detectCores() - 1
 
 logac = readRDS(here::here("data", "2011_2014", "accelerometry", "minute_level", "nhanes_1440_LAC.rds"))
 # summarize at subject level
@@ -53,6 +54,8 @@ if(!file.exists(here::here("results", "fui_res.rds")) | force){
                          family = "gaussian",
                          analytic = FALSE,
                          boot_type = "case",
+                         parallel = TRUE,
+                         num_cores = n_cores,
                          num_boots = 500)
 
   saveRDS(fit_fui, here::here("results", "fui_res.rds"))
@@ -75,6 +78,8 @@ if(!file.exists(here::here("results", "fui_res_agecat.rds")) | force){
                          var = TRUE,
                          argvals = seq(from = 1, to = 1440, by = 10),
                          family = "gaussian",
+                         parallel = TRUE,
+                         num_cores = n_cores,
                          analytic = FALSE,
                          boot_type = "case",
                          num_boots = 500)
