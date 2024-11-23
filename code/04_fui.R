@@ -1,5 +1,5 @@
 library(tidyverse)
-force = TRUE
+force = FALSE
 if(!require("fastFMM")) install.packages("fastFMM", dependencies = TRUE)
 library(fastFMM)
 n_cores = parallel::detectCores() - 1
@@ -84,7 +84,7 @@ if(!file.exists(here::here("results", "fui_res_agecat.rds")) | force){
                          boot_type = "case",
                          num_boots = 500)
 
-  fit_fui = readRDS( here::here("results", "fui_res_agecat.rds"))
+  saveRDS(fit_fui, here::here("results", "fui_res_agecat.rds"))
 
 }
 
