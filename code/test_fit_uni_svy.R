@@ -92,6 +92,7 @@ model_formula = ac ~ age + gender + (1|SEQN)
       )
     )
   print(fit_uni)
+  t1 = Sys.time()
   fit_uni_svy = suppressMessages(
       svy2lme(
         formula = stats::as.formula(paste0("Yl ~ ", model_formula[3])),
@@ -99,7 +100,8 @@ model_formula = ac ~ age + gender + (1|SEQN)
       )
     )
   print(fit_uni_svy)
-    # fit_uni_svy = suppressMessages(
+  print(Sys.time() - t1)
+  # fit_uni_svy = suppressMessages(
     #   svy2lme(
     #     formula = stats::as.formula(paste0("Yl ~ ", model_formula[3])),
     #     design = rep_designtemp
