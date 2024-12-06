@@ -6,6 +6,8 @@ library(fastFMM)
 library(svylme)
 library(svrep)
 library(tidyfun)
+# library(future)
+# library(furrr)
 n_cores = parallel::detectCores() - 1
 source(here::here("code", "prepare_data_functional.R"))
 source(here::here("code", "nhanes_boot_fui.R"))
@@ -49,6 +51,7 @@ fui_bootstrap_results =
     boot_res = map(iteration, nhanes_boot_fui_svy, df = nhanes_df)
   ) %>%
   unnest(boot_res)
+saveRDS(fui_bootstrap_results, here::here("results", "fui_boot.rds"))
 
 min_regressions_boot =
   nhanes_df %>%
@@ -75,6 +78,9 @@ fui_bootstrap_results_v2 =
   unnest(data) %>%
   select(iteration = boot, term, smooth_coef)
 
+saveRDS(fui_bootstrap_results_v2, here::here("results", "fui_boot2.rds"))
+
+pdf(here::here("results", "boot_res.pdf"))
 fui_bootstrap_results %>%
   group_by(term) %>%
   summarize(
@@ -114,3 +120,4 @@ fui_bootstrap_results_v2 %>%
     breaks = seq(0, 24, length = 5),
     labels = str_c(seq(0, 24, length = 5), ":00")) +
   labs(x = "Time of day (hours)", y = "Coefficient")
+dev.off()
