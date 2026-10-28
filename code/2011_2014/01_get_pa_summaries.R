@@ -85,7 +85,7 @@ bout_summary_ac =
 
 
 ### consider - maybe only during wake time??
-wear = readRDS(here::here("data", "2011_2014", "accelerometry", "minute_level", "nhanes_1440_PAXPREDM.rds"))
+wear = read_rds(here::here("data", "2011_2014", "accelerometry", "minute_level", "nhanes_1440_PAXPREDM.rds"))
 
 awake_mat = wear %>%
   mutate(across(starts_with("min"), ~if_else(.x == 1, 1, 0))) %>%
@@ -138,7 +138,7 @@ summary_df_wearac =
 
 
 
-mims = readRDS(here::here("data", "2011_2014", "accelerometry", "minute_level", "nhanes_1440_PAXMTSM.rds"))
+mims = read_rds(here::here("data", "2011_2014", "accelerometry", "minute_level", "nhanes_1440_PAXMTSM.rds"))
 
 
 act_mat = mims %>% select(starts_with("min")) %>% as.matrix()
@@ -236,7 +236,7 @@ summary_df_filt =
   right_join(include_days, by = c("SEQN", "PAXDAYM"))
 
 if (!dir.exists(here::here("data", "2011_2014", "accelerometry", "summarized"))) dir.create(here::here("data", "2011_2014", "accelerometry", "summarized"))
-saveRDS(summary_df_filt,
+write_rds(summary_df_filt,
         here::here("data", "2011_2014", "accelerometry", "summarized", "pa_summary_AC_MIMS_G_H.rds"))
 
 ## day level
@@ -248,7 +248,7 @@ summary_df_day =
             across(-c(PAXDAYM, PAXDAYWM), ~mean(.x, na.rm = TRUE)),
             .groups = "drop")
 
-saveRDS(summary_df_day,
+write_rds(summary_df_day,
         here::here("data", "2011_2014", "accelerometry", "summarized", "pa_summary_subj_AC_MIMS_G_H.rds"))
 
 

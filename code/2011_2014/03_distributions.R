@@ -9,7 +9,7 @@ library(broom)
 library(paletteer)
 rm(list = ls())
 col1 = "#CC5151"; col2 = "#422CB2"
-joined = readRDS(here::here("data", "2011_2014", "covariates_pa_valid.rds"))
+joined = read_rds(here::here("data", "2011_2014", "covariates_pa_valid.rds"))
 
 joined = joined %>%
   mutate(age_cat = cut(age_in_years_at_screening,

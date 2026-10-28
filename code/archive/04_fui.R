@@ -8,13 +8,13 @@ if(!require("fastFMM")) install.packages("fastFMM", dependencies = TRUE)
 library(fastFMM)
 n_cores = parallel::detectCores() - 1
 
-logac = readRDS(here::here("data", "2011_2014", "accelerometry", "minute_level", "nhanes_1440_LAC.rds"))
+logac = read_rds(here::here("data", "2011_2014", "accelerometry", "minute_level", "nhanes_1440_LAC.rds"))
 # summarize at subject level
 
 inclusion = read_csv(here::here("data", "2011_2014", "accelerometry", "inclusion_summary.csv.gz"),
                      col_types = cols(SEQN = col_character()))
 
-demo = readRDS(here::here("data", "2011_2014", "demographics", "covariates_mortality_G_H_tidy.rds"))
+demo = read_rds(here::here("data", "2011_2014", "demographics", "covariates_mortality_G_H_tidy.rds"))
 demo_small =
   demo %>%
   select(SEQN, gender, age = age_in_years_at_screening)
@@ -62,10 +62,10 @@ if(!file.exists(here::here("results", "fui_res.rds")) | force){
                          num_cores = n_cores,
                          num_boots = 500)
 
-  saveRDS(fit_fui, here::here("results", "fui_res.rds"))
+  write_rds(fit_fui, here::here("results", "fui_res.rds"))
 }
 
-# fit_fui = readRDS( here::here("results", "fui_res.rds"))
+# fit_fui = read_rds( here::here("results", "fui_res.rds"))
 # plot_obj = fastFMM::plot_fui(fit_fui, return = TRUE)
 
 
@@ -88,7 +88,7 @@ if(!file.exists(here::here("results", "fui_res_agecat.rds")) | force){
                          boot_type = "case",
                          num_boots = 500)
 
-  saveRDS(fit_fui, here::here("results", "fui_res_agecat.rds"))
+  write_rds(fit_fui, here::here("results", "fui_res_agecat.rds"))
 
 }
 

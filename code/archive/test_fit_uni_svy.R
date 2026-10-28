@@ -5,13 +5,13 @@ library(fastFMM)
 library(svylme)
 n_cores = parallel::detectCores() - 1
 
-logac = readRDS(here::here("data", "2011_2014", "accelerometry", "minute_level", "nhanes_1440_LAC.rds"))
+logac = read_rds(here::here("data", "2011_2014", "accelerometry", "minute_level", "nhanes_1440_LAC.rds"))
 # summarize at subject level
 
 inclusion = read_csv(here::here("data", "2011_2014", "accelerometry", "inclusion_summary.csv.gz"),
                      col_types = cols(SEQN = col_character()))
 
-demo = readRDS(here::here("data", "2011_2014", "demographics", "covariates_mortality_G_H_tidy.rds"))
+demo = read_rds(here::here("data", "2011_2014", "demographics", "covariates_mortality_G_H_tidy.rds"))
 source(here::here("code", "functions", "rewt_accel.R"))
 
 

@@ -42,13 +42,13 @@ col1 = "#CC5151"; col2 = "#422CB2"
 # paletteer_d("ggthemes::colorblind")
 col_vec = c("#000000FF", "#009E73FF", "#CC79A7FF", "#E69F00FF", "#D55E00FF", "#56B4E9FF", "#0072B2FF")
 
-pa_old = readRDS(here::here("data", "accelerometry", 
+pa_old = read_rds(here::here("data", "accelerometry", 
                               "summarized", "pa_summary_AC_C_D.rds")) %>% 
   mutate(SEQN = as.character(SEQN)) %>% 
   group_by(SEQN) %>%
   summarize(across(-PAXDAY, ~mean(.x, na.rm = TRUE))) 
 
-days = readRDS(here::here("data", "accelerometry", "inclusion_c_d.rds"))
+days = read_rds(here::here("data", "accelerometry", "inclusion_c_d.rds"))
 
 wear = 
   days %>% 
@@ -58,7 +58,7 @@ wear =
   summarize(wear_mins = mean(non_zero_vals)) %>% 
   mutate(SEQN = as.character(SEQN))
 
-demo = readRDS(here::here("data", "demographics", "processed", "subset_C_D_tidy.rds")) 
+demo = read_rds(here::here("data", "demographics", "processed", "subset_C_D_tidy.rds")) 
   
 ```
 
@@ -844,7 +844,7 @@ outliers =
 #   select(SEQN, total, mean, mvpa)
 
 # by day 
-# pa_byday = readRDS(here::here("data", "accelerometry", 
+# pa_byday = read_rds(here::here("data", "accelerometry", 
 #                               "summarized", "pa_summary_AC_C_D.rds")) %>% 
 #   mutate(SEQN = as.character(SEQN)) 
 # 
@@ -852,8 +852,8 @@ outliers =
 #   filter(SEQN == "26729") %>% 
 #   select(SEQN, PAXDAY, mod, vig, mvpa)
 
-minute_level = readRDS(here::here("data", "accelerometry", "minute_level", "NHANES_1440_C_PAXINTEN.rds")) %>% 
-  bind_rows(readRDS(here::here("data", "accelerometry", "minute_level", "NHANES_1440_D_PAXINTEN.rds")))
+minute_level = read_rds(here::here("data", "accelerometry", "minute_level", "NHANES_1440_C_PAXINTEN.rds")) %>% 
+  bind_rows(read_rds(here::here("data", "accelerometry", "minute_level", "NHANES_1440_D_PAXINTEN.rds")))
 
 for(sub in outliers$SEQN){
   temp = 
@@ -890,7 +890,7 @@ for(sub in outliers$SEQN){
 # load packages 
 
 
-pa = readRDS(here::here("data", "accelerometry", 
+pa = read_rds(here::here("data", "accelerometry", 
                               "summarized", "pa_summary_AC.rds")) %>% 
   mutate(SEQN = as.character(SEQN)) %>% 
   group_by(SEQN) %>%
@@ -904,7 +904,7 @@ wear_gh =
   summarize(wear_mins = mean(non_flag_wear)) %>% 
   mutate(SEQN = as.character(SEQN))
 
-demo_gh = readRDS(here::here("data", "demographics",  "covariates_accel_mortality_df.rds")) %>% 
+demo_gh = read_rds(here::here("data", "demographics",  "covariates_accel_mortality_df.rds")) %>% 
   select(-contains("peak"), -contains("total_"))
 
   
@@ -1541,7 +1541,7 @@ results %>%
 
 ```{r}
 #| cache: false 
-pa_mims = readRDS(here::here("data", "accelerometry", 
+pa_mims = read_rds(here::here("data", "accelerometry", 
                               "summarized", "pa_summary_PAXMTSM.rds")) %>% 
   mutate(SEQN = as.character(SEQN)) %>% 
   group_by(SEQN) %>%
@@ -1842,8 +1842,8 @@ results %>%
 
 ```{r}
 #| cache: false 
-demo_y = readRDS(here::here("data", "demographics", "subset_Y_tidy.rds")) 
-pa_y = readRDS(here::here("data", "accelerometry", "summarized", 
+demo_y = read_rds(here::here("data", "demographics", "subset_Y_tidy.rds")) 
+pa_y = read_rds(here::here("data", "accelerometry", "summarized", 
                           "pa_summary_AC_paxy.rds")) %>% 
   mutate(SEQN = as.character(SEQN)) %>% 
   group_by(SEQN) %>%

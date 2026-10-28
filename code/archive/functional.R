@@ -1,13 +1,13 @@
 library(tidyverse)
 library(tidyfun)
 library(refund)
-acc = readRDS(here::here("data", "accelerometry", "minute_level", "nhanes_1440_C_PAXINTEN.rds"))
-acd = readRDS(here::here("data", "accelerometry", "minute_level", "nhanes_1440_D_PAXINTEN.rds"))
+acc = read_rds(here::here("data", "accelerometry", "minute_level", "nhanes_1440_C_PAXINTEN.rds"))
+acd = read_rds(here::here("data", "accelerometry", "minute_level", "nhanes_1440_D_PAXINTEN.rds"))
 ac =
   bind_rows(acc, acd)
 
-days = readRDS(here::here("data", "accelerometry", "inclusion_c_d.rds"))
-demo = readRDS(here::here("data", "demographics", "processed", "subset_C_D_tidy.rds"))
+days = read_rds(here::here("data", "accelerometry", "inclusion_c_d.rds"))
+demo = read_rds(here::here("data", "demographics", "processed", "subset_C_D_tidy.rds"))
 
 include_days =
   days %>%

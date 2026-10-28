@@ -2,7 +2,7 @@ library(tidyverse)
 col1 = "#CC5151"; col2 = "#422CB2"
 
 together =
-  readRDS(here::here("data", "accelerometry", "summarized", "ac_summary.rds"))
+  read_rds(here::here("data", "accelerometry", "summarized", "ac_summary.rds"))
 
 together_sum =
   together %>%
@@ -12,7 +12,7 @@ together_sum =
 
 
 covariates =
-  readRDS(here::here("data", "demographics", "covariates_accel_mortality_df.rds"))
+  read_rds(here::here("data", "demographics", "covariates_accel_mortality_df.rds"))
 
 vars = c("wear", "tlac", "tac", "mlac", "st", "lipa", "mvpa")
 

@@ -8,7 +8,7 @@ library(broom)
 library(paletteer)
 rm(list = ls())
 
-joined = readRDS(here::here("data", "2011_2014", "covariates_pa_valid.rds"))
+joined = read_rds(here::here("data", "2011_2014", "covariates_pa_valid.rds"))
 
 joined = joined %>%
   mutate(age_cat = cut(age_in_years_at_screening,

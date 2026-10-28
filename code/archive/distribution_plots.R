@@ -2,10 +2,10 @@
 # load data
 
 library(tidyverse)
-ac1440 = readRDS(here::here("data", "lily", "data", "nhanes_1440_AC.rds"))
-mims1440 = readRDS(here::here("data", "lily", "data", "nhanes_1440_PAXMTSM.rds"))
-ac1440_c = readRDS(here::here("data", "lily", "data", "nhanes_1440_C_PAXINTEN.rds"))
-ac1440_d = readRDS(here::here("data", "lily", "data", "nhanes_1440_D_PAXINTEN.rds"))
+ac1440 = read_rds(here::here("data", "lily", "data", "nhanes_1440_AC.rds"))
+mims1440 = read_rds(here::here("data", "lily", "data", "nhanes_1440_PAXMTSM.rds"))
+ac1440_c = read_rds(here::here("data", "lily", "data", "nhanes_1440_C_PAXINTEN.rds"))
+ac1440_d = read_rds(here::here("data", "lily", "data", "nhanes_1440_D_PAXINTEN.rds"))
 ac1440_cd = ac1440_c %>% bind_rows(ac1440_d)
 
 

@@ -2702,13 +2702,13 @@ overflow-y: scroll;
 <span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co"># paletteer_d(&quot;ggthemes::colorblind&quot;)</span></span>
 <span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>col_vec <span class="ot">=</span> <span class="fu">c</span>(<span class="st">&quot;#000000FF&quot;</span>, <span class="st">&quot;#009E73FF&quot;</span>, <span class="st">&quot;#CC79A7FF&quot;</span>, <span class="st">&quot;#E69F00FF&quot;</span>, <span class="st">&quot;#D55E00FF&quot;</span>, <span class="st">&quot;#56B4E9FF&quot;</span>, <span class="st">&quot;#0072B2FF&quot;</span>)</span>
 <span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>pa_old <span class="ot">=</span> <span class="fu">readRDS</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;accelerometry&quot;</span>, </span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>pa_old <span class="ot">=</span> <span class="fu">read_rds</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;accelerometry&quot;</span>, </span>
 <span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>                              <span class="st">&quot;summarized&quot;</span>, <span class="st">&quot;pa_summary_AC_C_D.rds&quot;</span>)) <span class="sc">%&gt;%</span> </span>
 <span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">SEQN =</span> <span class="fu">as.character</span>(SEQN)) <span class="sc">%&gt;%</span> </span>
 <span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(SEQN) <span class="sc">%&gt;%</span></span>
 <span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="fu">across</span>(<span class="sc">-</span>PAXDAY, <span class="sc">~</span><span class="fu">mean</span>(.x, <span class="at">na.rm =</span> <span class="cn">TRUE</span>))) </span>
 <span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>days <span class="ot">=</span> <span class="fu">readRDS</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;accelerometry&quot;</span>, <span class="st">&quot;inclusion_c_d.rds&quot;</span>))</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>days <span class="ot">=</span> <span class="fu">read_rds</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;accelerometry&quot;</span>, <span class="st">&quot;inclusion_c_d.rds&quot;</span>))</span>
 <span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>wear <span class="ot">=</span> </span>
 <span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>  days <span class="sc">%&gt;%</span> </span>
@@ -2718,7 +2718,7 @@ overflow-y: scroll;
 <span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">wear_mins =</span> <span class="fu">mean</span>(non_zero_vals)) <span class="sc">%&gt;%</span> </span>
 <span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">SEQN =</span> <span class="fu">as.character</span>(SEQN))</span>
 <span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>demo <span class="ot">=</span> <span class="fu">readRDS</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;demographics&quot;</span>, <span class="st">&quot;processed&quot;</span>, <span class="st">&quot;subset_C_D_tidy.rds&quot;</span>)) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>demo <span class="ot">=</span> <span class="fu">read_rds</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;demographics&quot;</span>, <span class="st">&quot;processed&quot;</span>, <span class="st">&quot;subset_C_D_tidy.rds&quot;</span>)) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <section id="nhanes-2003-2006" class="level1">
@@ -9721,7 +9721,7 @@ height: 0px !important;
 <span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a><span class="co">#   select(SEQN, total, mean, mvpa)</span></span>
 <span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a><span class="co"># by day </span></span>
-<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a><span class="co"># pa_byday = readRDS(here::here(&quot;data&quot;, &quot;accelerometry&quot;, </span></span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a><span class="co"># pa_byday = read_rds(here::here(&quot;data&quot;, &quot;accelerometry&quot;, </span></span>
 <span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a><span class="co">#                               &quot;summarized&quot;, &quot;pa_summary_AC_C_D.rds&quot;)) %&gt;% </span></span>
 <span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a><span class="co">#   mutate(SEQN = as.character(SEQN)) </span></span>
 <span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
@@ -9729,8 +9729,8 @@ height: 0px !important;
 <span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a><span class="co">#   filter(SEQN == &quot;26729&quot;) %&gt;% </span></span>
 <span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a><span class="co">#   select(SEQN, PAXDAY, mod, vig, mvpa)</span></span>
 <span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>minute_level <span class="ot">=</span> <span class="fu">readRDS</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;accelerometry&quot;</span>, <span class="st">&quot;minute_level&quot;</span>, <span class="st">&quot;NHANES_1440_C_PAXINTEN.rds&quot;</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>(<span class="fu">readRDS</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;accelerometry&quot;</span>, <span class="st">&quot;minute_level&quot;</span>, <span class="st">&quot;NHANES_1440_D_PAXINTEN.rds&quot;</span>)))</span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>minute_level <span class="ot">=</span> <span class="fu">read_rds</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;accelerometry&quot;</span>, <span class="st">&quot;minute_level&quot;</span>, <span class="st">&quot;NHANES_1440_C_PAXINTEN.rds&quot;</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>(<span class="fu">read_rds</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;accelerometry&quot;</span>, <span class="st">&quot;minute_level&quot;</span>, <span class="st">&quot;NHANES_1440_D_PAXINTEN.rds&quot;</span>)))</span>
 <span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(sub <span class="cf">in</span> outliers<span class="sc">$</span>SEQN){</span>
 <span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a>  temp <span class="ot">=</span> </span>
@@ -9796,7 +9796,7 @@ height: 0px !important;
 <div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># load packages </span></span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>pa <span class="ot">=</span> <span class="fu">readRDS</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;accelerometry&quot;</span>, </span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>pa <span class="ot">=</span> <span class="fu">read_rds</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;accelerometry&quot;</span>, </span>
 <span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>                              <span class="st">&quot;summarized&quot;</span>, <span class="st">&quot;pa_summary_AC.rds&quot;</span>)) <span class="sc">%&gt;%</span> </span>
 <span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">SEQN =</span> <span class="fu">as.character</span>(SEQN)) <span class="sc">%&gt;%</span> </span>
 <span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(SEQN) <span class="sc">%&gt;%</span></span>
@@ -9810,7 +9810,7 @@ height: 0px !important;
 <span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">wear_mins =</span> <span class="fu">mean</span>(non_flag_wear)) <span class="sc">%&gt;%</span> </span>
 <span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">SEQN =</span> <span class="fu">as.character</span>(SEQN))</span>
 <span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>demo_gh <span class="ot">=</span> <span class="fu">readRDS</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;demographics&quot;</span>,  <span class="st">&quot;covariates_accel_mortality_df.rds&quot;</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>demo_gh <span class="ot">=</span> <span class="fu">read_rds</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;demographics&quot;</span>,  <span class="st">&quot;covariates_accel_mortality_df.rds&quot;</span>)) <span class="sc">%&gt;%</span> </span>
 <span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">contains</span>(<span class="st">&quot;peak&quot;</span>), <span class="sc">-</span><span class="fu">contains</span>(<span class="st">&quot;total_&quot;</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
@@ -14918,7 +14918,7 @@ height: 0px !important;
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>pa_mims <span class="ot">=</span> <span class="fu">readRDS</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;accelerometry&quot;</span>, </span>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>pa_mims <span class="ot">=</span> <span class="fu">read_rds</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;accelerometry&quot;</span>, </span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>                              <span class="st">&quot;summarized&quot;</span>, <span class="st">&quot;pa_summary_PAXMTSM.rds&quot;</span>)) <span class="sc">%&gt;%</span> </span>
 <span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">SEQN =</span> <span class="fu">as.character</span>(SEQN)) <span class="sc">%&gt;%</span> </span>
 <span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(SEQN) <span class="sc">%&gt;%</span></span>
@@ -16484,8 +16484,8 @@ height: 0px !important;
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>demo_y <span class="ot">=</span> <span class="fu">readRDS</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;demographics&quot;</span>, <span class="st">&quot;subset_Y_tidy.rds&quot;</span>)) </span>
-<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>pa_y <span class="ot">=</span> <span class="fu">readRDS</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;accelerometry&quot;</span>, <span class="st">&quot;summarized&quot;</span>, </span>
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>demo_y <span class="ot">=</span> <span class="fu">read_rds</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;demographics&quot;</span>, <span class="st">&quot;subset_Y_tidy.rds&quot;</span>)) </span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>pa_y <span class="ot">=</span> <span class="fu">read_rds</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;accelerometry&quot;</span>, <span class="st">&quot;summarized&quot;</span>, </span>
 <span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>                          <span class="st">&quot;pa_summary_AC_paxy.rds&quot;</span>)) <span class="sc">%&gt;%</span> </span>
 <span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">SEQN =</span> <span class="fu">as.character</span>(SEQN)) <span class="sc">%&gt;%</span> </span>
 <span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(SEQN) <span class="sc">%&gt;%</span></span>
@@ -18282,13 +18282,13 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <span id="cb42-44"><a href="#cb42-44" aria-hidden="true" tabindex="-1"></a><span class="co"># paletteer_d(&quot;ggthemes::colorblind&quot;)</span></span>
 <span id="cb42-45"><a href="#cb42-45" aria-hidden="true" tabindex="-1"></a>col_vec <span class="ot">=</span> <span class="fu">c</span>(<span class="st">&quot;#000000FF&quot;</span>, <span class="st">&quot;#009E73FF&quot;</span>, <span class="st">&quot;#CC79A7FF&quot;</span>, <span class="st">&quot;#E69F00FF&quot;</span>, <span class="st">&quot;#D55E00FF&quot;</span>, <span class="st">&quot;#56B4E9FF&quot;</span>, <span class="st">&quot;#0072B2FF&quot;</span>)</span>
 <span id="cb42-46"><a href="#cb42-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-47"><a href="#cb42-47" aria-hidden="true" tabindex="-1"></a>pa_old <span class="ot">=</span> <span class="fu">readRDS</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;accelerometry&quot;</span>, </span>
+<span id="cb42-47"><a href="#cb42-47" aria-hidden="true" tabindex="-1"></a>pa_old <span class="ot">=</span> <span class="fu">read_rds</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;accelerometry&quot;</span>, </span>
 <span id="cb42-48"><a href="#cb42-48" aria-hidden="true" tabindex="-1"></a>                              <span class="st">&quot;summarized&quot;</span>, <span class="st">&quot;pa_summary_AC_C_D.rds&quot;</span>)) <span class="sc">%&gt;%</span> </span>
 <span id="cb42-49"><a href="#cb42-49" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">SEQN =</span> <span class="fu">as.character</span>(SEQN)) <span class="sc">%&gt;%</span> </span>
 <span id="cb42-50"><a href="#cb42-50" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(SEQN) <span class="sc">%&gt;%</span></span>
 <span id="cb42-51"><a href="#cb42-51" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="fu">across</span>(<span class="sc">-</span>PAXDAY, <span class="sc">~</span><span class="fu">mean</span>(.x, <span class="at">na.rm =</span> <span class="cn">TRUE</span>))) </span>
 <span id="cb42-52"><a href="#cb42-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-53"><a href="#cb42-53" aria-hidden="true" tabindex="-1"></a>days <span class="ot">=</span> <span class="fu">readRDS</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;accelerometry&quot;</span>, <span class="st">&quot;inclusion_c_d.rds&quot;</span>))</span>
+<span id="cb42-53"><a href="#cb42-53" aria-hidden="true" tabindex="-1"></a>days <span class="ot">=</span> <span class="fu">read_rds</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;accelerometry&quot;</span>, <span class="st">&quot;inclusion_c_d.rds&quot;</span>))</span>
 <span id="cb42-54"><a href="#cb42-54" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-55"><a href="#cb42-55" aria-hidden="true" tabindex="-1"></a>wear <span class="ot">=</span> </span>
 <span id="cb42-56"><a href="#cb42-56" aria-hidden="true" tabindex="-1"></a>  days <span class="sc">%&gt;%</span> </span>
@@ -18298,7 +18298,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <span id="cb42-60"><a href="#cb42-60" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">wear_mins =</span> <span class="fu">mean</span>(non_zero_vals)) <span class="sc">%&gt;%</span> </span>
 <span id="cb42-61"><a href="#cb42-61" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">SEQN =</span> <span class="fu">as.character</span>(SEQN))</span>
 <span id="cb42-62"><a href="#cb42-62" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-63"><a href="#cb42-63" aria-hidden="true" tabindex="-1"></a>demo <span class="ot">=</span> <span class="fu">readRDS</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;demographics&quot;</span>, <span class="st">&quot;processed&quot;</span>, <span class="st">&quot;subset_C_D_tidy.rds&quot;</span>)) </span>
+<span id="cb42-63"><a href="#cb42-63" aria-hidden="true" tabindex="-1"></a>demo <span class="ot">=</span> <span class="fu">read_rds</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;demographics&quot;</span>, <span class="st">&quot;processed&quot;</span>, <span class="st">&quot;subset_C_D_tidy.rds&quot;</span>)) </span>
 <span id="cb42-64"><a href="#cb42-64" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb42-65"><a href="#cb42-65" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb42-66"><a href="#cb42-66" aria-hidden="true" tabindex="-1"></a></span>
@@ -19083,7 +19083,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <span id="cb42-871"><a href="#cb42-871" aria-hidden="true" tabindex="-1"></a><span class="co">#   select(SEQN, total, mean, mvpa)</span></span>
 <span id="cb42-872"><a href="#cb42-872" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-873"><a href="#cb42-873" aria-hidden="true" tabindex="-1"></a><span class="co"># by day </span></span>
-<span id="cb42-874"><a href="#cb42-874" aria-hidden="true" tabindex="-1"></a><span class="co"># pa_byday = readRDS(here::here(&quot;data&quot;, &quot;accelerometry&quot;, </span></span>
+<span id="cb42-874"><a href="#cb42-874" aria-hidden="true" tabindex="-1"></a><span class="co"># pa_byday = read_rds(here::here(&quot;data&quot;, &quot;accelerometry&quot;, </span></span>
 <span id="cb42-875"><a href="#cb42-875" aria-hidden="true" tabindex="-1"></a><span class="co">#                               &quot;summarized&quot;, &quot;pa_summary_AC_C_D.rds&quot;)) %&gt;% </span></span>
 <span id="cb42-876"><a href="#cb42-876" aria-hidden="true" tabindex="-1"></a><span class="co">#   mutate(SEQN = as.character(SEQN)) </span></span>
 <span id="cb42-877"><a href="#cb42-877" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
@@ -19091,8 +19091,8 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <span id="cb42-879"><a href="#cb42-879" aria-hidden="true" tabindex="-1"></a><span class="co">#   filter(SEQN == &quot;26729&quot;) %&gt;% </span></span>
 <span id="cb42-880"><a href="#cb42-880" aria-hidden="true" tabindex="-1"></a><span class="co">#   select(SEQN, PAXDAY, mod, vig, mvpa)</span></span>
 <span id="cb42-881"><a href="#cb42-881" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-882"><a href="#cb42-882" aria-hidden="true" tabindex="-1"></a>minute_level <span class="ot">=</span> <span class="fu">readRDS</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;accelerometry&quot;</span>, <span class="st">&quot;minute_level&quot;</span>, <span class="st">&quot;NHANES_1440_C_PAXINTEN.rds&quot;</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb42-883"><a href="#cb42-883" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>(<span class="fu">readRDS</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;accelerometry&quot;</span>, <span class="st">&quot;minute_level&quot;</span>, <span class="st">&quot;NHANES_1440_D_PAXINTEN.rds&quot;</span>)))</span>
+<span id="cb42-882"><a href="#cb42-882" aria-hidden="true" tabindex="-1"></a>minute_level <span class="ot">=</span> <span class="fu">read_rds</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;accelerometry&quot;</span>, <span class="st">&quot;minute_level&quot;</span>, <span class="st">&quot;NHANES_1440_C_PAXINTEN.rds&quot;</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb42-883"><a href="#cb42-883" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>(<span class="fu">read_rds</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;accelerometry&quot;</span>, <span class="st">&quot;minute_level&quot;</span>, <span class="st">&quot;NHANES_1440_D_PAXINTEN.rds&quot;</span>)))</span>
 <span id="cb42-884"><a href="#cb42-884" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-885"><a href="#cb42-885" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(sub <span class="cf">in</span> outliers<span class="sc">$</span>SEQN){</span>
 <span id="cb42-886"><a href="#cb42-886" aria-hidden="true" tabindex="-1"></a>  temp <span class="ot">=</span> </span>
@@ -19129,7 +19129,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <span id="cb42-919"><a href="#cb42-919" aria-hidden="true" tabindex="-1"></a><span class="co"># load packages </span></span>
 <span id="cb42-920"><a href="#cb42-920" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-921"><a href="#cb42-921" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-922"><a href="#cb42-922" aria-hidden="true" tabindex="-1"></a>pa <span class="ot">=</span> <span class="fu">readRDS</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;accelerometry&quot;</span>, </span>
+<span id="cb42-922"><a href="#cb42-922" aria-hidden="true" tabindex="-1"></a>pa <span class="ot">=</span> <span class="fu">read_rds</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;accelerometry&quot;</span>, </span>
 <span id="cb42-923"><a href="#cb42-923" aria-hidden="true" tabindex="-1"></a>                              <span class="st">&quot;summarized&quot;</span>, <span class="st">&quot;pa_summary_AC.rds&quot;</span>)) <span class="sc">%&gt;%</span> </span>
 <span id="cb42-924"><a href="#cb42-924" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">SEQN =</span> <span class="fu">as.character</span>(SEQN)) <span class="sc">%&gt;%</span> </span>
 <span id="cb42-925"><a href="#cb42-925" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(SEQN) <span class="sc">%&gt;%</span></span>
@@ -19143,7 +19143,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <span id="cb42-933"><a href="#cb42-933" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">wear_mins =</span> <span class="fu">mean</span>(non_flag_wear)) <span class="sc">%&gt;%</span> </span>
 <span id="cb42-934"><a href="#cb42-934" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">SEQN =</span> <span class="fu">as.character</span>(SEQN))</span>
 <span id="cb42-935"><a href="#cb42-935" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-936"><a href="#cb42-936" aria-hidden="true" tabindex="-1"></a>demo_gh <span class="ot">=</span> <span class="fu">readRDS</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;demographics&quot;</span>,  <span class="st">&quot;covariates_accel_mortality_df.rds&quot;</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb42-936"><a href="#cb42-936" aria-hidden="true" tabindex="-1"></a>demo_gh <span class="ot">=</span> <span class="fu">read_rds</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;demographics&quot;</span>,  <span class="st">&quot;covariates_accel_mortality_df.rds&quot;</span>)) <span class="sc">%&gt;%</span> </span>
 <span id="cb42-937"><a href="#cb42-937" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">contains</span>(<span class="st">&quot;peak&quot;</span>), <span class="sc">-</span><span class="fu">contains</span>(<span class="st">&quot;total_&quot;</span>))</span>
 <span id="cb42-938"><a href="#cb42-938" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-939"><a href="#cb42-939" aria-hidden="true" tabindex="-1"></a>  </span>
@@ -19779,7 +19779,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <span id="cb42-1587"><a href="#cb42-1587" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-1590"><a href="#cb42-1590" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
 <span id="cb42-1591"><a href="#cb42-1591" aria-hidden="true" tabindex="-1"></a><span class="co">#| cache: false </span></span>
-<span id="cb42-1592"><a href="#cb42-1592" aria-hidden="true" tabindex="-1"></a>pa_mims <span class="ot">=</span> <span class="fu">readRDS</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;accelerometry&quot;</span>, </span>
+<span id="cb42-1592"><a href="#cb42-1592" aria-hidden="true" tabindex="-1"></a>pa_mims <span class="ot">=</span> <span class="fu">read_rds</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;accelerometry&quot;</span>, </span>
 <span id="cb42-1593"><a href="#cb42-1593" aria-hidden="true" tabindex="-1"></a>                              <span class="st">&quot;summarized&quot;</span>, <span class="st">&quot;pa_summary_PAXMTSM.rds&quot;</span>)) <span class="sc">%&gt;%</span> </span>
 <span id="cb42-1594"><a href="#cb42-1594" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">SEQN =</span> <span class="fu">as.character</span>(SEQN)) <span class="sc">%&gt;%</span> </span>
 <span id="cb42-1595"><a href="#cb42-1595" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(SEQN) <span class="sc">%&gt;%</span></span>
@@ -20079,8 +20079,8 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <span id="cb42-1897"><a href="#cb42-1897" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-1900"><a href="#cb42-1900" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
 <span id="cb42-1901"><a href="#cb42-1901" aria-hidden="true" tabindex="-1"></a><span class="co">#| cache: false </span></span>
-<span id="cb42-1902"><a href="#cb42-1902" aria-hidden="true" tabindex="-1"></a>demo_y <span class="ot">=</span> <span class="fu">readRDS</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;demographics&quot;</span>, <span class="st">&quot;subset_Y_tidy.rds&quot;</span>)) </span>
-<span id="cb42-1903"><a href="#cb42-1903" aria-hidden="true" tabindex="-1"></a>pa_y <span class="ot">=</span> <span class="fu">readRDS</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;accelerometry&quot;</span>, <span class="st">&quot;summarized&quot;</span>, </span>
+<span id="cb42-1902"><a href="#cb42-1902" aria-hidden="true" tabindex="-1"></a>demo_y <span class="ot">=</span> <span class="fu">read_rds</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;demographics&quot;</span>, <span class="st">&quot;subset_Y_tidy.rds&quot;</span>)) </span>
+<span id="cb42-1903"><a href="#cb42-1903" aria-hidden="true" tabindex="-1"></a>pa_y <span class="ot">=</span> <span class="fu">read_rds</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;accelerometry&quot;</span>, <span class="st">&quot;summarized&quot;</span>, </span>
 <span id="cb42-1904"><a href="#cb42-1904" aria-hidden="true" tabindex="-1"></a>                          <span class="st">&quot;pa_summary_AC_paxy.rds&quot;</span>)) <span class="sc">%&gt;%</span> </span>
 <span id="cb42-1905"><a href="#cb42-1905" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">SEQN =</span> <span class="fu">as.character</span>(SEQN)) <span class="sc">%&gt;%</span> </span>
 <span id="cb42-1906"><a href="#cb42-1906" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(SEQN) <span class="sc">%&gt;%</span></span>

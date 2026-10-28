@@ -121,6 +121,6 @@ res_df_filt =
   res_df %>%
   right_join(keep_days, by = c("SEQN", "PAXDAY"))
 
-saveRDS(res_df_filt, here::here("data", "2003_2006", "accelerometry", "summarized", "paxinten_summary.rds"),
+write_rds(res_df_filt, here::here("data", "2003_2006", "accelerometry", "summarized", "paxinten_summary.rds"),
         compress = "xz")
 ########################

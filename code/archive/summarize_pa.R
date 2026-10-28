@@ -1,10 +1,10 @@
 rm(list = ls())
 library(tidyverse)
 
-nhanes_1440_AC = readRDS(here::here("data", "accelerometry", "minute_level", "nhanes_1440_AC.rds"))
+nhanes_1440_AC = read_rds(here::here("data", "accelerometry", "minute_level", "nhanes_1440_AC.rds"))
 
-wear = readRDS(here::here("data", "accelerometry", "minute_level", "nhanes_1440_PAXPREDM.rds"))
-flags = readRDS(here::here("data", "accelerometry", "minute_level", "nhanes_1440_PAXFLGSM.rds"))
+wear = read_rds(here::here("data", "accelerometry", "minute_level", "nhanes_1440_PAXPREDM.rds"))
+flags = read_rds(here::here("data", "accelerometry", "minute_level", "nhanes_1440_PAXFLGSM.rds"))
 # replace nonwear with NA
 
 wear_mat = wear %>% select(starts_with("min")) %>%
@@ -106,5 +106,5 @@ res_df_filt =
   res_df %>%
   right_join(keep_days, by = c("SEQN", "PAXDAYM"))
 
-saveRDS(res_df_filt, here::here("data", "accelerometry", "summarized", "ac_summary.rds"), compress = "xz")
+write_rds(res_df_filt, here::here("data", "accelerometry", "summarized", "ac_summary.rds"), compress = "xz")
 

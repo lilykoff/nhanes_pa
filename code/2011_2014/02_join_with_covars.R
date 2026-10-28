@@ -4,8 +4,8 @@
 
 library(tidyverse)
 
-pa = readRDS(here::here("data", "2011_2014", "accelerometry", "summarized", "pa_summary_subj_AC_MIMS_G_H.rds"))
-demo = readRDS(here::here("data", "2011_2014", "demographics", "covariates_mortality_G_H_tidy.rds"))
+pa = read_rds(here::here("data", "2011_2014", "accelerometry", "summarized", "pa_summary_subj_AC_MIMS_G_H.rds"))
+demo = read_rds(here::here("data", "2011_2014", "demographics", "covariates_mortality_G_H_tidy.rds"))
 
 # previously read inclusion_summary.csv.gz (from nhanes_80hz pipeline)
 # inclusion = read_csv(here::here("data", "2011_2014", "accelerometry", "inclusion_summary.csv.gz"),
@@ -50,11 +50,11 @@ joined = joined %>%
   )
 
 
-saveRDS(joined, here::here("data", "2011_2014", "covariates_pa_all.rds"))
+write_rds(joined, here::here("data", "2011_2014", "covariates_pa_all.rds"))
 
 
 valid_accel =
   joined %>%
   filter(valid_accel)
 
-saveRDS(valid_accel, here::here("data", "2011_2014", "covariates_pa_valid.rds"))
+write_rds(valid_accel, here::here("data", "2011_2014", "covariates_pa_valid.rds"))

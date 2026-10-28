@@ -3,8 +3,8 @@ library(survey)
 library(gt)
 library(gtsummary)
 rm(list = ls())
-mvpa_subj = readRDS(here::here("data", "accelerometry", "mvpa_data.rds"))
-mvpa_subj_y = readRDS(here::here("data", "accelerometry", "mvpa_data_paxy.rds"))
+mvpa_subj = read_rds(here::here("data", "accelerometry", "mvpa_data.rds"))
+mvpa_subj_y = read_rds(here::here("data", "accelerometry", "mvpa_data_paxy.rds"))
 
 # make table of characteristics by sex
 
@@ -236,13 +236,13 @@ p1
 
 
 ### pax y
-day_level_pa_paxy = readRDS(here::here("data", "accelerometry", "nhanes_day_level_pa_paxy.rds"))
+day_level_pa_paxy = read_rds(here::here("data", "accelerometry", "nhanes_day_level_pa_paxy.rds"))
 include_paxy =
   day_level_pa_paxy %>%
   filter(include_day) %>%
   select(SEQN, PAXDAYM)
 
-ac_paxy = readRDS(here::here("data", "accelerometry", "nhanes_1440_AC_paxy.rds"))
+ac_paxy = read_rds(here::here("data", "accelerometry", "nhanes_1440_AC_paxy.rds"))
 
 ac_paxyfilt =
   ac_paxy %>%

@@ -6,7 +6,7 @@ load(here::here("data", "accelerometry", "rnhanes_data", "Covariate_D.rda"))
 load(here::here("data", "accelerometry", "rnhanes_data", "Covariate_C.rda"))
 
 together =
-  readRDS( here::here("data", "accelerometry", "summarized", "paxinten_summary.rds"))
+  read_rds( here::here("data", "accelerometry", "summarized", "paxinten_summary.rds"))
 
 together_sum =
   together %>%

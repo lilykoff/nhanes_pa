@@ -36,8 +36,8 @@ col1 = "#CC5151"; col2 = "#422CB2"
 # paletteer_d("ggthemes::colorblind")
 col_vec = c("#000000FF", "#009E73FF", "#CC79A7FF", "#E69F00FF", "#D55E00FF", "#56B4E9FF", "#0072B2FF")
 
-mvpa_subj = readRDS(here::here("data", "pa_covariates.rds"))
-days = readRDS(here::here("data", "accelerometry", "inclusion_c_d.rds"))
+mvpa_subj = read_rds(here::here("data", "pa_covariates.rds"))
+days = read_rds(here::here("data", "accelerometry", "inclusion_c_d.rds"))
 
 wear = 
   days %>% 

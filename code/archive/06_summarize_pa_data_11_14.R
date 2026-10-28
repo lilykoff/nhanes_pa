@@ -7,7 +7,7 @@ library(slider)
 # https://journals.lww.com/acsm-msse/fulltext/2020/01000/estimating_sedentary_time_from_a_hip__and.25.aspx
 
 
-ac = readRDS(here::here("data", "accelerometry", "minute_level", "nhanes_1440_AC.rds"))
+ac = read_rds(here::here("data", "accelerometry", "minute_level", "nhanes_1440_AC.rds"))
 
 days = read_csv(here::here("data", "accelerometry", "inclusion_summary.csv.gz"),
                 col_types = list(SEQN = col_character()))
@@ -115,12 +115,12 @@ mvpa =
   left_join(mvpa_boutsum, by = c("SEQN", "PAXDAYM")) %>%
   left_join(ranges, by = c("SEQN", "PAXDAYM"))
 
-saveRDS(mvpa, here::here("data", "accelerometry", "summarized", "pa_summary_AC.rds"))
+write_rds(mvpa, here::here("data", "accelerometry", "summarized", "pa_summary_AC.rds"))
 
 
 rm(list = ls())
 
-mims = readRDS(here::here("data", "accelerometry", "minute_level", "nhanes_1440_PAXMTSM.rds"))
+mims = read_rds(here::here("data", "accelerometry", "minute_level", "nhanes_1440_PAXMTSM.rds"))
 
 days = read_csv(here::here("data", "accelerometry", "inclusion_summary.csv.gz"),
                 col_types = list(SEQN = col_character()))
@@ -208,7 +208,7 @@ mvpa =
 
 
 
-saveRDS(mvpa, here::here("data", "accelerometry", "summarized", "pa_summary_PAXMTSM.rds"))
+write_rds(mvpa, here::here("data", "accelerometry", "summarized", "pa_summary_PAXMTSM.rds"))
 
 rm(list = ls())
 include_paxy = read_csv(here::here("data", "accelerometry", "inclusion_summary_paxy.csv.gz"))
@@ -219,7 +219,7 @@ include_days =
   select(SEQN, PAXDAYM) %>%
   mutate(SEQN = as.character(SEQN))
 
-ac_paxy = readRDS(here::here("data", "accelerometry", "minute_level", "nhanes_1440_AC_paxy.rds"))
+ac_paxy = read_rds(here::here("data", "accelerometry", "minute_level", "nhanes_1440_AC_paxy.rds"))
 
 ac_paxyfilt =
   ac_paxy %>%
@@ -298,5 +298,5 @@ mvpa =
   left_join(mvpa_boutsum, by = c("SEQN", "PAXDAYM")) %>%
   left_join(ranges, by = c("SEQN", "PAXDAYM"))
 
-saveRDS(mvpa, here::here("data", "accelerometry", "summarized", "pa_summary_AC_paxy.rds"))
+write_rds(mvpa, here::here("data", "accelerometry", "summarized", "pa_summary_AC_paxy.rds"))
 
