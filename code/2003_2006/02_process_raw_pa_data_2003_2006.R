@@ -1,3 +1,5 @@
+# Step 2 (2003-2006): reshape raw PAX files to one row per subject-day (1440 minute columns).
+
 library(tidyverse)
 library(haven)
 force = TRUE
@@ -29,7 +31,7 @@ make_longer = function(df, var, wave){
   }
 }
 
-map(.x = c("PAXINTEN", "PAXCAL", "PAXSTAT", "PAXSTEP"),
+walk(.x = c("PAXINTEN", "PAXCAL", "PAXSTAT", "PAXSTEP"),
     .f = make_longer,
     df = pax_d,
     wave = "D")
@@ -49,7 +51,7 @@ pax_c =
 # df = pax_d
 
 
-map(.x = c("PAXINTEN", "PAXCAL", "PAXSTAT"),
+walk(.x = c("PAXINTEN", "PAXCAL", "PAXSTAT"),
     .f = make_longer,
     df = pax_c,
     wave = "C")

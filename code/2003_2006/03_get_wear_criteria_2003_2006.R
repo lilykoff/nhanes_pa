@@ -1,10 +1,13 @@
+# Step 3 (2003-2006): flag non-wear (>= 60 min of zeros) and valid days (>= 10 h wear).
+# Output: data/2003_2006/accelerometry/inclusion_c_d.rds
+
 library(tidyverse)
 library(slider)
 rm(list = ls())
 
 
-inten = readRDS(here::here("data", "2003_2006", "accelerometry", "minute_level", "nhanes_1440_D_PAXINTEN.rds"))
-inten_c = readRDS(here::here("data", "2003_2006","accelerometry", "minute_level", "nhanes_1440_C_PAXINTEN.rds"))
+inten = read_rds(here::here("data", "2003_2006", "accelerometry", "minute_level", "nhanes_1440_D_PAXINTEN.rds"))
+inten_c = read_rds(here::here("data", "2003_2006","accelerometry", "minute_level", "nhanes_1440_C_PAXINTEN.rds"))
 nonwear_bouts =
   inten %>%
   pivot_longer(cols = starts_with("min")) %>%
@@ -40,7 +43,7 @@ wear_all =
   wear %>%
   bind_rows(wear_c)
 
-saveRDS(wear_all, here::here("data", "2003_2006", "accelerometry", "inclusion_c_d.rds"))
+write_rds(wear_all, here::here("data", "2003_2006", "accelerometry", "inclusion_c_d.rds"))
 # For the analyses presented here, a valid day was defined as having 10 or more hours of monitor wear.
 # Wear time was determined by subtracting nonwear time from 24 h.
 # Nonwear was defined by an interval of at least 60 consecutive minutes of zero activity intensity counts,

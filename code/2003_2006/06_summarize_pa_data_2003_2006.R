@@ -1,3 +1,6 @@
+# Step 6 (2003-2006): day-level AC summaries (MVPA, bouts, AC ranges) on valid days.
+# NOTE: reads from data/accelerometry/ (older layout), not data/2003_2006/accelerometry/.
+
 # create mvpa data
 # For adults and older adolescents (ages 18 or older), intensity thresholds were calculated as a weighted average of criteria determined
 # from four studies that based criteria on treadmill or track walking (4,10,14,35).
@@ -9,12 +12,12 @@
 library(tidyverse)
 library(survey)
 library(slider)
-acc = readRDS(here::here("data", "accelerometry", "minute_level", "nhanes_1440_C_PAXINTEN.rds"))
-acd = readRDS(here::here("data", "accelerometry", "minute_level", "nhanes_1440_D_PAXINTEN.rds"))
+acc = read_rds(here::here("data", "2003_2006", "accelerometry", "minute_level", "nhanes_1440_C_PAXINTEN.rds"))
+acd = read_rds(here::here("data", "2003_2006", "accelerometry", "minute_level", "nhanes_1440_D_PAXINTEN.rds"))
 ac =
   bind_rows(acc, acd)
 
-days = readRDS(here::here("data", "accelerometry", "inclusion_c_d.rds"))
+days = read_rds(here::here("data", "2003_2006", "accelerometry", "inclusion_c_d.rds"))
 
 include_days =
   days %>%
@@ -99,93 +102,14 @@ mvpa_boutsum =
   rename_at(vars(-c(SEQN, PAXDAY)), ~str_c(.x, "_bout"))
 
 
-# mvpa_subj =
-#   mvpa_sum %>%
-#   group_by(SEQN) %>%
-#   summarize(across(c(total, mean, contains("montoye")), ~mean(.x, na.rm = TRUE))) %>%
-#   ungroup()
-#
-# mvpa_boutsubj =
-#   mvpa_boutsum %>%
-#   group_by(SEQN) %>%
-#   summarize(across(contains("montoye"), ~mean(.x, na.rm = TRUE))) %>%
-#   ungroup() %>%
-#   rename_at(vars(-SEQN), ~str_c(.x, "_bout")) %>%
-#   ungroup()
 
 mvpa =
   mvpa_sum %>%
   left_join(mvpa_boutsum, by = c("SEQN", "PAXDAY")) %>%
   left_join(ranges,  by = c("SEQN", "PAXDAY"))
 
-saveRDS(mvpa, here::here("data", "accelerometry", "summarized", "pa_summary_AC_C_D.rds"))
+if (!dir.exists(here::here("data", "2003_2006", "accelerometry", "summarized"))) dir.create(here::here("data", "2003_2006", "accelerometry", "summarized"))
+write_rds(mvpa, here::here("data", "2003_2006", "accelerometry", "summarized", "pa_summary_AC_C_D.rds"))
 
 
 
-#
-# mvpa_sum =
-#   ac_filt %>%
-#   pivot_longer(cols = starts_with("min")) %>%
-#   group_by(SEQN, PAXDAY) %>%
-#   summarize(mod = sum(between(value, 2020, 5999), na.rm = TRUE),
-#             mvpa = sum(value >= 2020, na.rm = TRUE),
-#             vig = sum(value > 5999, na.rm = TRUE),
-#             total = sum(value, na.rm = TRUE),
-#             mean = mean(value, na.rm = TRUE),
-#             range_00_05 = sum(value < 500, na.rm = TRUE),
-#             range_05_10 = sum(between(value, 500, 1000), na.rm = TRUE),
-#             range_10_15 = sum(between(value, 1001, 1500), na.rm = TRUE),
-#             range_15_20 = sum(between(value, 1501, 2000), na.rm = TRUE),
-#             range_20_25 = sum(between(value, 2001, 2500), na.rm = TRUE),
-#             range_25_30 = sum(between(value, 2501, 3000), na.rm = TRUE),
-#             range_30_35 = sum(between(value, 3000, 3500), na.rm = TRUE),
-#             range_35_40 = sum(between(value, 3501, 4000), na.rm = TRUE),
-#             range_40_45 = sum(between(value, 4001, 4500), na.rm = TRUE),
-#             range_45_50 = sum(between(value, 4501, 5000), na.rm = TRUE),
-#             range_50_pl = sum(value > 5000, na.rm = TRUE),
-#             .groups = "drop")
-#
-# mvpa_boutsum =
-#   ac_filt %>%
-#   pivot_longer(cols = starts_with("min")) %>%
-#   group_by(SEQN, PAXDAY) %>%
-#   # Apply a sliding window over the "value" column to create 10-minute windows
-#   # mutate(
-#   #   # Calculate a rolling 10-minute average (assuming 1 observation per minute)
-#   #   bout_avg = slide_dbl(value, mean, .before = 9, .complete = TRUE)
-#   # ) %>%
-#   mutate(
-#     # Calculate a rolling 10-minute average (assuming 1 observation per minute)
-#     mvpa = slide_dbl(value, .f = function(x){sum(x >= 2020, na.rm = TRUE) >= 8}, .before = 9, .complete = TRUE),
-#     vig = slide_dbl(value, .f = function(x){sum(x > 5999, na.rm = TRUE) >= 8}, .before = 9, .complete = TRUE)
-#   ) %>%
-#   # mutate(
-#   #   mvpa_montoye = bout_avg > 3941,
-#   #   vig_montoye = bout_avg > 5613
-#   # ) %>%
-#   summarize(across(c(mvpa, vig), ~sum(.x, na.rm = TRUE))) %>%
-#   ungroup()
-#
-#
-#
-# mvpa_subj =
-#   mvpa_sum %>%
-#   group_by(SEQN) %>%
-#   summarize(across(c(total, mean, contains("mvpa"), contains("vig"), contains("mod"), contains("range")), ~mean(.x, na.rm = TRUE))) %>%
-#   ungroup()
-#
-# mvpa_boutsubj =
-#   mvpa_boutsum %>%
-#   group_by(SEQN) %>%
-#   summarize(across(c(mvpa, vig), ~mean(.x, na.rm = TRUE))) %>%
-#   ungroup() %>%
-#   rename_at(vars(-SEQN), ~str_c(.x, "_bout")) %>%
-#   ungroup()
-#
-# mvpa =
-#   mvpa_subj %>%
-#   left_join(mvpa_boutsubj, by = "SEQN") %>%
-#   mutate(SEQN = as.character(SEQN)) %>%
-#   left_join(demo, by = "SEQN")
-#
-# saveRDS(mvpa, here::here("data", "pa_covariates.rds"))

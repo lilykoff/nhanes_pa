@@ -1,3 +1,6 @@
+# Step 5 (2003-2006): clean and derive analytic covariates (alcohol, smoking, BMI, etc.).
+# Output: data/2003_2006/demographics/processed/subset_C_D_tidy.rds
+
 library(tidyverse)
 # follow https://github.com/andrew-leroux/rnhanesdata/blob/master/vignettes/create-all-processed-data.Rmd
 
@@ -182,4 +185,4 @@ temp_mutated =
   mutate(SEQN = as.character(SEQN))
 
 
-saveRDS(temp_mutated, here::here("data", "2003_2006", "demographics", "processed", "subset_C_D_tidy.rds"))
+write_rds(temp_mutated, here::here("data", "2003_2006", "demographics", "processed", "subset_C_D_tidy.rds"))

@@ -1,3 +1,6 @@
+# Alternative step 6: same summaries computed from the rnhanesdata package's
+# processed 2003-2006 data, for comparison.
+
 # compare Andrew's data
 # https://github.com/andrew-leroux/rnhanesdata/blob/master/vignettes/NHANES_accelerometry_introduction.Rmd
 rm(list = ls())

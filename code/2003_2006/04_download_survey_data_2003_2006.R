@@ -1,3 +1,5 @@
+# Step 4 (2003-2006): download NHANES C/D questionnaire/exam XPTs and combine them.
+
 # install.packages('sjlabelled')
 # formerly create_covariate_datasets_from_raw.R
 library(tidyverse)
@@ -5,20 +7,19 @@ library(sjlabelled)
 source(here::here("code", "utils.R"))
 
 # download the xpts
-get_xpt = function(nh_table) {
+get_xpt = function(nh_table, force = TRUE) {
   nh_table = nh_table_name(nh_table)
   table = normalize_table_name(nh_table)
   # outdir = table_to_outdir(nh_table)
-  outdir = "demographics/raw/old"
+  outdir = "2003_2006/demographics/raw"
   stopifnot(!is.na(outdir))
   data_dir = here::here("data", outdir)
   dir.create(data_dir, showWarnings = FALSE, recursive = TRUE)
-
   url = nhanes_xpt_url(nh_table)
   outfile = normalize_table_name(nh_table)
   outfile = paste0(outfile, ".XPT")
   file = file.path(data_dir, outfile)
-  if (!file.exists(file)) {
+  if (!file.exists(file) || force) {
     curl::curl_download(url, destfile = file, quiet = FALSE)
   }
   file
@@ -28,7 +29,7 @@ names = c("ALQ", "DEMO", "DIQ","BMX", "HSQ", "HUQ", "HSQ", "MCQ", "PAQ", "PFQ", 
 names_g = paste(names, "C", sep = "_")
 names_h = paste(names, "D", sep = "_")
 
-purrr::map(.x = c(names_g, names_h), .f = get_xpt)
+purrr::walk(.x = c(names_g, names_h), .f = get_xpt)
 
 # read in the XPTs - do a bunch of manipulations
 demo_c = haven::read_xpt(here::here("data", "2003_2006", "demographics", "raw",  "DEMO_C.XPT"))
