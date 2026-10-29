@@ -3,34 +3,40 @@
 
 # compare Andrew's data
 # https://github.com/andrew-leroux/rnhanesdata/blob/master/vignettes/NHANES_accelerometry_introduction.Rmd
-rm(list = ls())
+library(tidyverse)
 
 # load 1440 data
-load(here::here("data", "2003_2006","rnhanes_data", "PAXINTEN_D.rda"))
-load(here::here("data",  "2003_2006","rnhanes_data","PAXINTEN_C.rda"))
+pax_d = read_rds(here::here("data", "2003_2006", "accelerometry", "minute_level", "nhanes_1440_D_PAXINTEN.rds"))
+pax_c = read_rds(here::here("data", "2003_2006", "accelerometry", "minute_level", "nhanes_1440_C_PAXINTEN.rds"))
+# load(here::here("data", "2003_2006","rnhanes_data", "PAXINTEN_D.rda"))
+# load(here::here("data",  "2003_2006","rnhanes_data","PAXINTEN_C.rda"))
 
-PAX = bind_rows(PAXINTEN_C, PAXINTEN_D)
-# load flags
-load(here::here("data", "2003_2006", "rnhanes_data","Flags_D.rda"))
-load(here::here("data", "2003_2006", "rnhanes_data", "Flags_C.rda"))
+PAX = bind_rows(pax_c, pax_d)
+
+
+# load flags 
+flag_d = read_rds(here::here("data", "2003_2006", "accelerometry", "minute_level", "nhanes_1440_D_PAXSTAT.rds"))
+flag_c = read_rds(here::here("data", "2003_2006", "accelerometry", "minute_level", "nhanes_1440_C_PAXSTAT.rds"))
 
 FLAGS =
-  bind_rows(Flags_C, Flags_D)
-# load covariates
+  bind_rows(flag_c, flag_d)
+
 
 # if nonwear, make NA
 FLAGS = FLAGS %>%
   mutate(across(starts_with("MIN"), ~replace(.x, .x == 0, NA_real_)))
 
 # replace nonwear with NA
-PAX[,paste0("MIN",1:1440)] = PAX[,paste0("MIN",1:1440)]*FLAGS[,paste0("MIN",1:1440)]
+PAX[,paste0("min_",sprintf(1:1440, fmt = "%04d"))] = PAX[,paste0("min_",sprintf(1:1440, fmt = "%04d"))]*FLAGS[,paste0("min_",sprintf(1:1440, fmt = "%04d"))]
 
-flag_mat = FLAGS %>% select(starts_with("MIN")) %>% as.matrix()
+# PAX[,paste0("MIN",1:1440)] = PAX[,paste0("MIN",1:1440)]*FLAGS[,paste0("MIN",1:1440)]
+
+flag_mat = FLAGS %>% select(starts_with("min")) %>% as.matrix()
 
 wear = rowSums(flag_mat, na.rm = TRUE)
 
 wear_6a_10p =
-  rowSums(as.matrix(FLAGS %>% select(MIN360:MIN1440)), na.rm = TRUE)
+  rowSums(as.matrix(FLAGS %>% select(min_0360:min_1440)), na.rm = TRUE)
 
 
 
@@ -39,7 +45,7 @@ wear_6a_10p =
 
 ### calculate statistics
 
-act_mat = PAX %>% select(starts_with("MIN")) %>% as.matrix()
+act_mat = PAX %>% select(starts_with("min")) %>% as.matrix()
 
 # compute within windows
 
@@ -58,7 +64,7 @@ for(i in 1:(length(window_list)-1)){
   st = rowSums(mat_temp < 100, na.rm = TRUE)
   lipa = rowSums(mat_temp > 100 & mat_temp < 2020, na.rm = TRUE)
   mvpa = rowSums(mat_temp >= 2020, na.rm = TRUE)
-
+  
   # if wear is 0, mlac will the NAN but others will be 0, make NA
   st[is.nan(mlac)] <- NA_real_
   lipa[is.nan(mlac)] <- NA_real_
@@ -81,14 +87,14 @@ res_df =
   as_tibble() %>%
   magrittr::set_colnames(paste(rep(vars, length(window_list)),
                                rep(c("0_2", "2_4", "4_6", "6_8", "8_10", "10_12", "12_14", "14_16", "16_18", "18_20", "20_22", "22_24"), each = nvars),
-        sep = "_"))
+                               sep = "_"))
 
 res_df =
   res_df %>%
   mutate(SEQN = PAX$SEQN,
-         PAXDAY = PAX$WEEKDAY,
-         PAXCAL = PAX$PAXCAL,
-         PAXSTAT = PAX$PAXSTAT,
+         PAXDAY = PAX$PAXDAY,
+         # PAXCAL = PAX$PAXCAL,
+         # PAXSTAT = PAX$PAXSTAT,
          wear = wear,
          wear_6a_10p = wear_6a_10p,
          tlac = tlac,
@@ -101,8 +107,9 @@ res_df =
 
 keep_days =
   res_df %>%
-  filter(PAXCAL == 1 & PAXSTAT == 1 & wear_6a_10p >= 600) %>%
+  filter(wear_6a_10p >= 600) %>%
   select(SEQN, PAXDAY)
+
 
 
 keep_subs =
@@ -113,14 +120,13 @@ keep_subs =
   ungroup() %>%
   pull(SEQN)
 
-keep_days =
-  keep_days %>%
-  filter(SEQN %in% keep_subs)
 
 res_df_filt =
   res_df %>%
-  right_join(keep_days, by = c("SEQN", "PAXDAY"))
+  mutate(include_day = wear_6a_10p >= 600,
+         valid_accel = SEQN %in% keep_subs) |> 
+  select(SEQN, PAXDAY, everything())
 
-write_rds(res_df_filt, here::here("data", "2003_2006", "accelerometry", "summarized", "paxinten_summary.rds"),
-        compress = "xz")
+write_rds(res_df_filt, here::here("data", "2003_2006", "accelerometry", "summarized", "paxinten_summary_C_D.rds"),
+          compress = "xz")
 ########################
