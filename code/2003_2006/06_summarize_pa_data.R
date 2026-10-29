@@ -127,6 +127,20 @@ res_df_filt =
          valid_accel = SEQN %in% keep_subs) |> 
   select(SEQN, PAXDAY, everything())
 
-write_rds(res_df_filt, here::here("data", "2003_2006", "accelerometry", "summarized", "paxinten_summary_C_D.rds"),
+write_rds(res_df_filt, here::here("data", "2003_2006", "accelerometry", "summarized", "pa_summary_AC_C_D.rds"),
           compress = "xz")
 ########################
+
+
+## get by subject
+
+res_df_day = 
+  res_df_filt |> 
+  filter(valid_accel) |> 
+  group_by(SEQN) %>%
+  summarize(n_good_days = n(),
+            across(-c(PAXDAY), ~mean(.x, na.rm = TRUE)),
+            .groups = "drop")
+
+write_rds(res_df_day, here::here("data", "2003_2006", "accelerometry", "summarized", "pa_summary_subj_AC_C_D.rds"),
+          compress = "xz")
