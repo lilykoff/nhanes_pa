@@ -3,9 +3,9 @@
 # Mirrors 2003_2006 steps 01-03 (download -> minute_level -> inclusion).
 # Outputs (data/2011_2014/):
 #   accelerometry/raw/nhanes_1440_*.csv.xz        downloaded files
-#   accelerometry/minute_level/nhanes_1440_{AC,PAXMTSM,scsslsteps,PAXPREDM,PAXFLGSM}.rds
-#       all days; nonwear/flagged minutes set to NA for AC, MIMS, steps
-#   accelerometry/inclusion_g_h.rds               day-level wear + include_day
+#   accelerometry/minute_level/nhanes_1440_{AC,LAC,PAXMTSM,scsslsteps,PAXPREDM,PAXFLGSM}.rds
+#       all days; nonwear/flagged minutes set to NA for AC, LAC (log(1 + AC)), MIMS, steps
+#   accelerometry/inclusion_g_h.rds               day-level wear + include
 #   demographics/covariates_accel_mortality_df.rds
 # The longer original version (with valid-day-only and MIMS + covariates outputs)
 # is in code/archive/00_download_data_original.R.

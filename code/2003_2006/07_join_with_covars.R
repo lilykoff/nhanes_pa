@@ -1,6 +1,10 @@
+# Step 7 (2003-2006): join subject-level PA with covariates and derive categorical
+# covariates (race, education, self-reported health, obesity). Mirrors 2011_2014/02.
+# Outputs: data/2003_2006/covariates_pa_all.rds, covariates_pa_valid.rds (>= 3 valid days)
+
 library(tidyverse)
 
-pa = read_rds(here::here("data", "2003_2006", "accelerometry", "summarized", "pa_summary_subj_AC_C_D.rds")) |> 
+pa = read_rds(here::here("data", "2003_2006", "accelerometry", "summarized", "pa_summary_subj_AC_C_D.rds")) |>
   mutate(SEQN = as.character(SEQN))
 demo = read_rds(here::here("data", "2003_2006", "demographics", "processed", "subset_C_D_tidy.rds"))
 

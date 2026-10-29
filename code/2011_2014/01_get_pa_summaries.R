@@ -1,10 +1,11 @@
 # Day- and subject-level PA summaries for NHANES 2011-2014.
-# Inputs:  data/2011_2014/accelerometry/minute_level/nhanes_1440_{AC,PAXPREDM,PAXMTSM}.rds
+# Inputs:  data/2011_2014/accelerometry/minute_level/nhanes_1440_{AC,PAXMTSM}.rds
 #          and accelerometry/inclusion_g_h.rds (all from 00_download_data.R)
-# Creates the log-AC file (nhanes_1440_LAC.rds), then AC and MIMS summaries
-# (totals, Montoye sed/light/mod/vig minutes, 10-min bouts, 2-hr windows, wake-only).
-# Outputs: data/2011_2014/accelerometry/summarized/pa_summary_AC_MIMS_G_H.rds (day level,
-#          analogous to 2003_2006 pa_summary_AC_C_D.rds) and pa_summary_subj_AC_MIMS_G_H.rds
+# AC summaries (wear, TAC, TLAC, Montoye sed/light/mod/vig minutes) and MIMS totals,
+# for the whole day and in 2-hr windows.
+# Outputs: data/2011_2014/accelerometry/summarized/pa_summary_AC_MIMS_G_H.rds (all days,
+#          with inclusion columns; analogous to 2003_2006 pa_summary_AC_C_D.rds) and
+#          pa_summary_subj_AC_MIMS_G_H.rds (subject means over valid days, n_good_days)
 
 library(tidyverse)
 library(slider)

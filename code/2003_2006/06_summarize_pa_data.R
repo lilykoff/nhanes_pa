@@ -1,7 +1,10 @@
-# Alternative step 6: same summaries computed from the rnhanesdata package's
-# processed 2003-2006 data, for comparison.
+# Step 6 (2003-2006): AC summaries (wear, TAC, TLAC, mean log AC, sedentary < 100,
+# LiPA 100-2019, MVPA >= 2020) for the whole day and in 2-hr windows.
+# Valid day = >= 600 min wear between minutes 360 and 1440; valid_accel = >= 3 valid days.
+# Outputs: data/2003_2006/accelerometry/summarized/pa_summary_AC_C_D.rds (all days) and
+#          pa_summary_subj_AC_C_D.rds (subject means over valid days, n_good_days)
 
-# compare Andrew's data
+# adapted from Andrew Leroux's rnhanesdata vignette:
 # https://github.com/andrew-leroux/rnhanesdata/blob/master/vignettes/NHANES_accelerometry_introduction.Rmd
 library(tidyverse)
 
