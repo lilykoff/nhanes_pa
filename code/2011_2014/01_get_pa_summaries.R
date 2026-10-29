@@ -8,11 +8,9 @@
 
 library(tidyverse)
 library(slider)
-# nhanes_80hz/lily/code/pipeline_code/aggregate_all_pa.R
-# nhanes_80hz/lily/code/pipeline_code/make_inclusion_df.R
+
 
 ## calculate AC summaries
-
 ac = read_rds(here::here("data", "2011_2014", "accelerometry", "minute_level", "nhanes_1440_AC.rds"))
 ### set thresholds
 sed = 2860
@@ -66,7 +64,7 @@ summary_df_ac =
   bind_cols(total_df) %>%
   bind_cols(window_df)
 
-### calculate bout-based metrics
+# ### calculate bout-based metrics
 bout_summary_ac =
   ac %>%
   pivot_longer(cols = starts_with("min")) %>%
@@ -82,65 +80,7 @@ bout_summary_ac =
             .groups = "drop")
 
 
-
-
-### consider - maybe only during wake time??
-wear = read_rds(here::here("data", "2011_2014", "accelerometry", "minute_level", "nhanes_1440_PAXPREDM.rds"))
-
-awake_mat = wear %>%
-  mutate(across(starts_with("min"), ~if_else(.x == 1, 1, 0))) %>%
-  select(starts_with("min")) %>%
-  as.matrix()
-
-wake_ac = act_mat * awake_mat
-
-
-result_mat = matrix(NA, nrow = nrow(wake_ac), ncol = nvars * (length(window_list) - 1))
-for(i in 1:(length(window_list)-1)){
-  start = window_list[i]
-  end = window_list[i + 1]
-  mat_temp = wake_ac[,start:end]
-  wear = rowSums(!is.na(mat_temp))
-  tlac = rowSums(log(1 + mat_temp), na.rm = TRUE)
-  tac = rowSums(mat_temp, na.rm = TRUE)
-  st = rowSums(mat_temp < sed, na.rm = TRUE)
-  lipa = rowSums(mat_temp >= sed & mat_temp <= light, na.rm = TRUE)
-  mpa = rowSums(mat_temp > light & mat_temp <= mod, na.rm = TRUE)
-  mvpa = rowSums(mat_temp > light, na.rm = TRUE)
-  vig = rowSums(mat_temp > mod, na.rm = TRUE)
-  result_mat[,((i * nvars)-(nvars-1)) : (i * nvars)] <- cbind(wear, tac, tlac, st, lipa, mpa, mvpa, vig)
-}
-total_df =
-  tibble(
-    wear = rowSums(!is.na(wake_ac)),
-    tac = rowSums(wake_ac, na.rm = TRUE),
-    tlac = rowSums(log(1 + wake_ac), na.rm = TRUE),
-    st = rowSums(wake_ac < sed, na.rm = TRUE),
-    lipa = rowSums(wake_ac >= sed & wake_ac <= light, na.rm = TRUE),
-    mpa = rowSums(wake_ac > light & wake_ac <= mod, na.rm = TRUE),
-    mvpa = rowSums(wake_ac > light, na.rm = TRUE),
-    vpa = rowSums(wake_ac > mod, na.rm = TRUE)
-  )
-
-window_df =
-  result_mat %>%
-  as_tibble() %>%
-  magrittr::set_colnames(paste(rep(vars, length(window_list)-1),
-                               rep(hr_vec, each = nvars),
-                               sep = "_"))
-
-summary_df_wearac =
-  ac %>%
-  select(SEQN, PAXDAYM, PAXDAYWM) %>%
-  bind_cols(total_df) %>%
-  bind_cols(window_df) %>%
-  rename_with(.cols = -c(SEQN, PAXDAYM, PAXDAYWM), .fn = ~paste0("wake_", "", .x))
-
-
-
 mims = read_rds(here::here("data", "2011_2014", "accelerometry", "minute_level", "nhanes_1440_PAXMTSM.rds"))
-
-
 act_mat = mims %>% select(starts_with("min")) %>% as.matrix()
 
 # compute within 2 hr windows
@@ -175,51 +115,14 @@ summary_df_mims =
   bind_cols(total_df) %>%
   bind_cols(window_df)
 
-wake_mims = act_mat * awake_mat
-
-window_list = seq(0, 1440, 120)
-vars = c("tmims", "tlmims")
-nvars = length(vars)
-result_mat = matrix(NA, nrow = nrow(wake_mims), ncol = nvars * (length(window_list) - 1))
-for(i in 1:(length(window_list)-1)){
-  start = window_list[i]
-  end = window_list[i + 1]
-  mat_temp = wake_mims[,start:end]
-  tlmims = rowSums(log(1 + mat_temp), na.rm = TRUE)
-  tmims = rowSums(mat_temp, na.rm = TRUE)
-  result_mat[,((i * nvars)-(nvars-1)) : (i * nvars)] <- cbind(tmims, tlmims)
-}
-total_df =
-  tibble(
-    tlmims = rowSums(log(1 + wake_mims), na.rm = TRUE),
-    tmims = rowSums(wake_mims, na.rm = TRUE)
-  )
-
-window_df =
-  result_mat %>%
-  as_tibble() %>%
-  magrittr::set_colnames(paste(rep(vars, length(window_list)-1),
-                               rep(hr_vec, each = nvars),
-                               sep = "_"))
-
-
-summary_df_wearmims =
-  mims %>%
-  select(SEQN, PAXDAYM, PAXDAYWM) %>%
-  bind_cols(total_df) %>%
-  bind_cols(window_df) %>%
-  rename_with(.cols = -c(SEQN, PAXDAYM, PAXDAYWM), .fn = ~paste0("wake_", "", .x))
-
-
 
 
 
 summary_df =
   summary_df_ac %>%
-  left_join(summary_df_wearac, by = c("SEQN", "PAXDAYM", "PAXDAYWM")) %>%
-  left_join(bout_summary_ac, by = c("SEQN", "PAXDAYM")) %>%
-  left_join(summary_df_mims, by = c("SEQN", "PAXDAYM", "PAXDAYWM")) %>%
-  left_join(summary_df_wearmims, by = c("SEQN", "PAXDAYM", "PAXDAYWM"))
+  # left_join(summary_df_ac, by = c("SEQN", "PAXDAYM", "PAXDAYWM")) %>%
+  # left_join(bout_summary_ac, by = c("SEQN", "PAXDAYM")) %>%
+  left_join(summary_df_mims, by = c("SEQN", "PAXDAYM", "PAXDAYWM")) 
 
 
 # previously read inclusion_summary.csv.gz (from nhanes_80hz pipeline)
@@ -227,22 +130,24 @@ summary_df =
 #                  col_types = cols(SEQN = col_character()))
 inclusion = read_rds(here::here("data", "2011_2014", "accelerometry", "inclusion_g_h.rds"))
 
-include_days =
-  inclusion %>%
-  filter(include) %>%
-  select(SEQN, PAXDAYM)
+# include_days =
+#   inclusion %>%
+#   filter(include) %>%
+#   select(SEQN, PAXDAYM)
+
 summary_df_filt =
   summary_df %>%
-  right_join(include_days, by = c("SEQN", "PAXDAYM"))
+  left_join(inclusion, by = c("SEQN", "PAXDAYM"))
 
 if (!dir.exists(here::here("data", "2011_2014", "accelerometry", "summarized"))) dir.create(here::here("data", "2011_2014", "accelerometry", "summarized"))
 write_rds(summary_df_filt,
         here::here("data", "2011_2014", "accelerometry", "summarized", "pa_summary_AC_MIMS_G_H.rds"))
 
-## day level
+## subject level
 
 summary_df_day =
   summary_df_filt %>%
+  filter(include) |> 
   group_by(SEQN) %>%
   summarize(n_good_days = n(),
             across(-c(PAXDAYM, PAXDAYWM), ~mean(.x, na.rm = TRUE)),
