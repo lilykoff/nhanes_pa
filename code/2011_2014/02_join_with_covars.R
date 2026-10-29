@@ -5,7 +5,7 @@
 library(tidyverse)
 
 pa = read_rds(here::here("data", "2011_2014", "accelerometry", "summarized", "pa_summary_subj_AC_MIMS_G_H.rds"))
-demo = read_rds(here::here("data", "2011_2014", "demographics", "covariates_mortality_G_H_tidy.rds"))
+demo = read_rds(here::here("data", "2011_2014", "demographics", "covariates_accel_mortality_df.rds"))
 
 # previously read inclusion_summary.csv.gz (from nhanes_80hz pipeline)
 # inclusion = read_csv(here::here("data", "2011_2014", "accelerometry", "inclusion_summary.csv.gz"),
