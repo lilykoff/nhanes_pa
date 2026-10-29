@@ -44,7 +44,10 @@ ml_files = file.path(ml_dir, paste0("nhanes_1440_", vars, ".rds"))
 
 if (!all(file.exists(c(inclusion_file, ml_files))) || force) {
   dfs = map(raw_files, read_csv)
-
+  # make log ac file 
+  dfs$LAC =  dfs$AC |> 
+    mutate(across(starts_with("min"), ~log(1 + .x)))
+  
   # all files should have the same subject-days in the same order
   ids = dfs$PAXFLGSM %>% select(SEQN, PAXDAYM)
   walk(dfs, ~ stopifnot(isTRUE(all.equal(select(.x, SEQN, PAXDAYM), ids))))
@@ -66,11 +69,10 @@ if (!all(file.exists(c(inclusion_file, ml_files))) || force) {
       non_zero_MIMS = rowSums(mims_mat_filt > 0, na.rm = TRUE),
       wake_wear = rowSums(wear_mat_filt == 1, na.rm = TRUE),
       include = non_flag_wear >= 1368 & wake_wear >= 420 & non_zero_MIMS >= 420,
-      include_day = include  # same name as 2003_2006 inclusion_c_d.rds
     )
   write_rds(inclusion, inclusion_file)
 
-  # minute-level files for all days (like 2003_2006 step 02);
+  # minute-level files for all days
   # nonwear and flagged minutes are set to NA
   nonwear_mat = flag_mat | wear_mat == 3
   save_minute_level = function(df, name, mask = TRUE) {
@@ -85,19 +87,8 @@ if (!all(file.exists(c(inclusion_file, ml_files))) || force) {
   save_minute_level(dfs$AC, "AC")
   save_minute_level(dfs$PAXMTSM, "PAXMTSM")
   save_minute_level(dfs$scsslsteps, "scsslsteps")
+  save_minute_level(dfs$LAC, "LAC")
   save_minute_level(dfs$PAXPREDM, "PAXPREDM", mask = FALSE)
   save_minute_level(dfs$PAXFLGSM, "PAXFLGSM", mask = FALSE)
   
 }
-
-# do log AC 
-
-if(!file.exists(here::here("data", "2011_2014", "accelerometry", "minute_level", "nhanes_1440_LAC.rds"))){
-  ac = read_rds(here::here("data", "2011_2014", "accelerometry", "minute_level", "nhanes_1440_AC.rds"))
-  lac = ac %>%
-    mutate(across(starts_with("min"), ~log(1 + .x)))
-  
-  write_rds(lac, here::here("data", "2011_2014", "accelerometry", "minute_level", "nhanes_1440_LAC.rds"),
-            compress = "xz")
-}
-
