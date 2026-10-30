@@ -1,4 +1,4 @@
-# Step 7 (2003-2006): join subject-level PA with covariates and derive categorical
+# Step 6 (2003-2006): join subject-level PA with covariates and derive categorical
 # covariates (race, education, self-reported health, obesity). Mirrors 2011_2014/02.
 # Outputs: data/2003_2006/covariates_pa_all.rds, covariates_pa_valid.rds (>= 3 valid days)
 
@@ -8,20 +8,13 @@ pa = read_rds(here::here("data", "2003_2006", "accelerometry", "summarized", "pa
   mutate(SEQN = as.character(SEQN))
 demo = read_rds(here::here("data", "2003_2006", "demographics", "processed", "subset_C_D_tidy.rds"))
 
-# previously read inclusion_summary.csv.gz (from nhanes_80hz pipeline)
-# inclusion = read_csv(here::here("data", "2011_2014", "accelerometry", "inclusion_summary.csv.gz"),
-#                  col_types = cols(SEQN = col_character()))
-inclusion = read_rds(here::here("data", "2003_2006", "accelerometry", "inclusion_c_d.rds"))
-
-accel_ids = inclusion %>%
-  select(SEQN) %>%
-  distinct() %>%
-  pull()
+pa_unfilt = read_rds(here::here("data", "2003_2006", "accelerometry", "summarized", "pa_summary_AC_C_D.rds")) |>
+  mutate(SEQN = as.character(SEQN))
 
 joined = demo %>%
   left_join(pa, by = "SEQN") %>%
-  mutate(valid_accel = n_good_days >= 3,
-         has_accel = SEQN %in% accel_ids)
+  mutate(has_accel = SEQN %in% unique(pa_unfilt$SEQN),
+         valid_accel = SEQN %in% unique(pa$SEQN))
 
 
 

@@ -1,4 +1,4 @@
-# Step 4 (2003-2006): download NHANES C/D questionnaire/exam XPTs and combine them.
+# Step 3 (2003-2006): download NHANES C/D questionnaire/exam XPTs and combine them.
 
 # install.packages('sjlabelled')
 # formerly create_covariate_datasets_from_raw.R

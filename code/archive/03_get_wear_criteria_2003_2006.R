@@ -49,14 +49,3 @@ write_rds(wear_all, here::here("data", "2003_2006", "accelerometry", "inclusion_
 # Nonwear was defined by an interval of at least 60 consecutive minutes of zero activity intensity counts,
 # with allowance for 1-2 min of counts between 0 and 100
 
-inten_small =
- inten %>%
-   filter(SEQN == SEQN[1])
-x = inten_small %>%
-  pivot_longer(cols = starts_with("min")) %>%
-  group_by(SEQN, PAXDAY) %>%
-  mutate(
-    zero_vals = slide_dbl(value, .f = function(x){sum(x == 0, na.rm = TRUE) >= 58 && sum(x > 0 & x < 100, na.rm = TRUE) <= 2}, .before = 59, .complete = TRUE),
-  ) %>%
-  summarize(across(zero_vals, ~sum(.x, na.rm = TRUE))) %>%
-  ungroup()

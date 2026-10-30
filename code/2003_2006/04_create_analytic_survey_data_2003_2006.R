@@ -1,4 +1,4 @@
-# Step 5 (2003-2006): clean and derive analytic covariates (alcohol, smoking, BMI, etc.).
+# Step 4 (2003-2006): clean and derive analytic covariates (alcohol, smoking, BMI, etc.).
 # Output: data/2003_2006/demographics/processed/subset_C_D_tidy.rds
 
 library(tidyverse)

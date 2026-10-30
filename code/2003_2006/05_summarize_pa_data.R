@@ -1,13 +1,15 @@
-# Step 6 (2003-2006): AC summaries (wear, TAC, TLAC, mean log AC, sedentary < 100,
-# LiPA 100-2019, MVPA >= 2020) for the whole day and in 2-hr windows.
-# Valid day = >= 600 min wear between minutes 360 and 1440; valid_accel = >= 3 valid days.
-# Outputs: data/2003_2006/accelerometry/summarized/pa_summary_AC_C_D.rds (all days) and
-#          pa_summary_subj_AC_C_D.rds (subject means over valid days, n_good_days)
+# Step 5 (2003-2006): AC summaries (TAC, TLAC, mean log AC, sedentary < 100,
+# LiPA 101-2019, MVPA >= 2020) for the whole day and in 2-hr windows.
+# Valid day = >= 600 min wear between minutes 360 and 1320 (6am-10pm), where nonwear is
+# 60+ min of zero counts (allowing 1-2 min of 1-99 counts); subjects need >= 3 valid days.
+# Outputs: data/2003_2006/accelerometry/summarized/pa_summary_AC_C_D.rds (all days, with
+#          wear_6a_10p, include_day, n_good_days) and pa_summary_subj_AC_C_D.rds
+#          (subject means over valid days)
 
 # adapted from Andrew Leroux's rnhanesdata vignette:
 # https://github.com/andrew-leroux/rnhanesdata/blob/master/vignettes/NHANES_accelerometry_introduction.Rmd
 library(tidyverse)
-
+library(slider)
 # load 1440 data
 pax_d = read_rds(here::here("data", "2003_2006", "accelerometry", "minute_level", "nhanes_1440_D_PAXINTEN.rds"))
 pax_c = read_rds(here::here("data", "2003_2006", "accelerometry", "minute_level", "nhanes_1440_C_PAXINTEN.rds"))
@@ -39,7 +41,7 @@ flag_mat = FLAGS %>% select(starts_with("min")) %>% as.matrix()
 wear = rowSums(flag_mat, na.rm = TRUE)
 
 wear_6a_10p =
-  rowSums(as.matrix(FLAGS %>% select(min_0360:min_1440)), na.rm = TRUE)
+  rowSums(as.matrix(FLAGS %>% select(min_0360:min_1320)), na.rm = TRUE)
 
 
 
@@ -107,31 +109,80 @@ res_df =
          lipa = lipa,
          mvpa = mvpa)
 
+# do wear criteria
+# valid day was defined as having 10 or more hours of monitor wear
+# nonwear was defined by an interval of at least 60 consecutive minutes of zero activity intensity counts,
+# with allowance for 1-2 min of counts between 0 and 100
+
+nonwear_bouts =
+  PAX %>%
+  pivot_longer(cols = starts_with("min")) %>%
+  group_by(SEQN, PAXDAY) %>%
+  mutate(
+    # TRUE at the last minute of each 60-min window that meets the nonwear rule
+    zero_end = slide_dbl(value, .f = function(x){sum(x == 0, na.rm = TRUE) >= 58 & sum(x > 0 & x < 100, na.rm = TRUE) <= 2}, .before = 59, .complete = TRUE),
+    # mark every minute of those windows as nonwear (minute i is nonwear if a qualifying
+    # window ends at i..i+59); missing minutes are skipped since non_na_vals already excludes them
+    zero_vals = slide_dbl(zero_end, ~ as.numeric(any(.x == 1, na.rm = TRUE)), .after = 59) * !is.na(value)
+  ) %>%
+  summarize(non_na_vals = sum(!is.na(value)),
+            zero_vals = sum(zero_vals, na.rm = TRUE)) %>%
+  ungroup()
+
+nonwear_bouts_6a_10p =
+  PAX %>%
+  select(SEQN, PAXDAY, min_0360:min_1320) |> 
+  pivot_longer(cols = starts_with("min")) %>%
+  group_by(SEQN, PAXDAY) %>%
+  mutate(
+    # TRUE at the last minute of each 60-min window that meets the nonwear rule
+    zero_end = slide_dbl(value, .f = function(x){sum(x == 0, na.rm = TRUE) >= 58 & sum(x > 0 & x < 100, na.rm = TRUE) <= 2}, .before = 59, .complete = TRUE),
+    # mark every minute of those windows as nonwear (minute i is nonwear if a qualifying
+    # window ends at i..i+59); missing minutes are skipped since non_na_vals already excludes them
+    zero_vals = slide_dbl(zero_end, ~ as.numeric(any(.x == 1, na.rm = TRUE)), .after = 59) * !is.na(value)
+  ) %>%
+  summarize(non_na_vals = sum(!is.na(value)),
+            zero_vals = sum(zero_vals, na.rm = TRUE)) %>%
+  ungroup()
+
+
+wear_summary_6a_10p =
+  nonwear_bouts_6a_10p %>%
+  ungroup() |> 
+  mutate(wear_6a_10p = non_na_vals - zero_vals,
+         include_day = wear_6a_10p >= 600) |> 
+  group_by(SEQN) |> 
+  mutate(n_good_days = sum(include_day)) |> 
+  ungroup()
+
+
 
 keep_days =
-  res_df %>%
-  filter(wear_6a_10p >= 600) %>%
+  wear_summary_6a_10p |> 
+  filter(include_day) %>%
   select(SEQN, PAXDAY)
 
-
-
 keep_subs =
-  keep_days %>%
-  group_by(SEQN) %>%
-  count() %>%
-  filter(n >= 3) %>%
-  ungroup() %>%
-  pull(SEQN)
+  wear_summary_6a_10p |> 
+  filter(n_good_days >= 3) %>%
+  select(SEQN, n_good_days) |> 
+  distinct()
+
 
 
 res_df_filt =
   res_df %>%
-  mutate(include_day = wear_6a_10p >= 600,
-         valid_accel = SEQN %in% keep_subs) |> 
+  select(-contains("wear")) |> 
+  select(SEQN, PAXDAY, tlac, tac, mlac, st, lipa, mvpa, everything()) |> 
+  left_join(wear_summary_6a_10p) |> 
+  rename(non_na_vals_6a_10p = non_na_vals,
+         zero_vals_6a_10p = zero_vals) |> 
   select(SEQN, PAXDAY, everything())
 
 write_rds(res_df_filt, here::here("data", "2003_2006", "accelerometry", "summarized", "pa_summary_AC_C_D.rds"),
           compress = "xz")
+
+
 ########################
 
 
@@ -139,11 +190,12 @@ write_rds(res_df_filt, here::here("data", "2003_2006", "accelerometry", "summari
 
 res_df_day = 
   res_df_filt |> 
-  filter(valid_accel) |> 
-  group_by(SEQN) %>%
-  summarize(n_good_days = n(),
-            across(-c(PAXDAY), ~mean(.x, na.rm = TRUE)),
+  filter(n_good_days >= 3 & include_day) |> 
+  group_by(SEQN, n_good_days) %>%
+  summarize(across(-c(PAXDAY, include_day), ~mean(.x, na.rm = TRUE)),
             .groups = "drop")
 
 write_rds(res_df_day, here::here("data", "2003_2006", "accelerometry", "summarized", "pa_summary_subj_AC_C_D.rds"),
           compress = "xz")
+
+
